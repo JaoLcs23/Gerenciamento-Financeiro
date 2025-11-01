@@ -54,8 +54,41 @@ public class DatabaseConnection {
             stmt.execute(createTransacoesTableSQL);
             System.out.println("Tabela 'transacoes' verificada/criada com sucesso.");
 
+            String createTransacoesRecorrentesSQL = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='transacoes_recorrentes' and xtype='U') " +
+                    "CREATE TABLE transacoes_recorrentes (" +
+                    "id INT PRIMARY KEY IDENTITY(1,1), " +
+                    "descricao NVARCHAR(MAX) NOT NULL, " +
+                    "valor DECIMAL(18, 2) NOT NULL, " +
+                    "tipo NVARCHAR(50) NOT NULL, " +
+                    "categoria_id INT NOT NULL, " +
+                    "dia_do_mes INT NOT NULL, " +
+                    "data_inicio DATE NOT NULL, " +
+                    "data_fim DATE NULL, " +
+                    "data_ultimo_processamento DATE NULL, " +
+                    "FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE" +
+                    ");";
+            stmt.execute(createTransacoesRecorrentesSQL);
+            System.out.println("Tabela 'transacoes_recorrentes' verificada/criada com sucesso.");
+
+            stmt.execute(createTransacoesRecorrentesSQL);
+            System.out.println("Tabela 'transacoes_recorrentes' verificada/criada com sucesso.");
+
+            String createOrcamentosTableSQL = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='orcamentos' and xtype='U') " +
+                    "CREATE TABLE orcamentos (" +
+                    "id INT PRIMARY KEY IDENTITY(1,1), " +
+                    "categoria_id INT NOT NULL, " +
+                    "valor_limite DECIMAL(18, 2) NOT NULL, " +
+                    "mes INT NOT NULL, " +
+                    "ano INT NOT NULL, " +
+                    "FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE, " +
+                    // Adiciona uma restrição para não permitir dois orçamentos para a mesma categoria no mesmo mês/ano
+                    "CONSTRAINT UQ_Categoria_Mes_Ano UNIQUE (categoria_id, mes, ano)" +
+                    ");";
+            stmt.execute(createOrcamentosTableSQL);
+            System.out.println("Tabela 'orcamentos' verificada/criada com sucesso.");
         }
     }
+
 
     //Metodo para fechar uma conexao com o banco de dados
     public static void closeConnection(Connection conn) {

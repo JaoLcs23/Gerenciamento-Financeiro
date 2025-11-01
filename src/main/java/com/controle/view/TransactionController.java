@@ -4,7 +4,7 @@ import com.controle.model.Categoria;
 import com.controle.model.TipoCategoria;
 import com.controle.model.Transacao;
 import com.controle.service.GastoPessoalService;
-
+import com.controle.model.Orcamento;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -15,9 +15,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-import javafx.scene.Node;
 import javafx.application.Platform;
-
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -25,9 +23,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
-public class TransactionController extends BaseController { // EXTENDE BASECONTROLLER
+public class TransactionController extends BaseController {
 
-    // AQUI: selectedTransactionId fica em TransactionController
     private int selectedTransactionId = 0;
 
     @FXML private TextField descriptionField;
@@ -53,7 +50,6 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
     @FXML private Label dateErrorLabel;
     @FXML private Label typeErrorLabel;
     @FXML private Label categoryErrorLabel;
-
     @FXML private TextField searchField;
 
 
@@ -114,18 +110,14 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
 
         loadTransactions("");
         setFormMode(false);
-        clearAllErrors(); // CHAMA clearAllErrors da BaseController
+        clearAllErrors();
 
         transactionTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showTransactionDetails(newValue));
     }
 
-    /**
-     * Exibe os detalhes da transacao selecionada nos campos de entrada.
-     * @param transacao A transacao selecionada, ou null se a selecao for limpa.
-     */
     private void showTransactionDetails(Transacao transacao) {
-        clearAllErrors(); // CHAMA clearAllErrors da BaseController
+        clearAllErrors();
         if (transacao != null) {
             selectedTransactionId = transacao.getId();
             descriptionField.setText(transacao.getDescricao());
@@ -139,10 +131,6 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
         }
     }
 
-    /**
-     * Alterna o modo do formulario entre "Adicionar" e "Editar/Excluir".
-     * @param isEditing true para modo de edicao/exclusao, false para modo de adicao.
-     */
     private void setFormMode(boolean isEditing) {
         addTransactionButton.setDisable(isEditing);
         updateTransactionButton.setDisable(!isEditing);
@@ -150,10 +138,6 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
         newTransactionButton.setDisable(false);
     }
 
-    /**
-     * Limpa os campos de entrada e redefine o formulario para o modo de adicao.
-     * @param event O evento de acao (clique do botao).
-     */
     @FXML
     private void handleNewTransaction(ActionEvent event) {
         descriptionField.clear();
@@ -164,28 +148,22 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
         selectedTransactionId = 0;
         transactionTable.getSelectionModel().clearSelection();
         setFormMode(false);
-        clearAllErrors(); // CHAMA clearAllErrors da BaseController
+        clearAllErrors();
         searchField.clear();
         loadTransactions("");
     }
 
-
-    /**
-     * Adiciona uma nova transacao ou atualiza uma existente.
-     * O comportamento depende do valor de selectedTransactionId.
-     * @param event O evento de acao.
-     */
     @FXML
     private void handleAddOrUpdateTransaction(ActionEvent event) {
-        clearAllErrors(); // CHAMA clearAllErrors da BaseController
+        clearAllErrors();
 
         String description = descriptionField.getText();
         double value;
         try {
-            value = Double.parseDouble(valueField.getText());
+            value = Double.parseDouble(valueField.getText().replace(",", "."));
         } catch (NumberFormatException e) {
-            showFieldError(valueField, valueErrorLabel, "Valor inválido. Use números e '.' para decimais."); // CHAMA showFieldError da BaseController
-            showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados."); // CHAMA showAlert da BaseController
+            showFieldError(valueField, valueErrorLabel, "Valor inválido. Use números e '.' para decimais.");
+            showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados.");
             return;
         }
         LocalDate date = datePicker.getValue();
@@ -194,67 +172,107 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
 
         boolean isValid = true;
         if (description == null || description.trim().isEmpty()) {
-            showFieldError(descriptionField, descriptionErrorLabel, "Descrição é obrigatória."); // CHAMA showFieldError da BaseController
+            showFieldError(descriptionField, descriptionErrorLabel, "Descrição é obrigatória.");
             isValid = false;
         }
         if (value <= 0) {
-            showFieldError(valueField, valueErrorLabel, "Valor deve ser positivo."); // CHAMA showFieldError da BaseController
+            showFieldError(valueField, valueErrorLabel, "Valor deve ser positivo.");
             isValid = false;
         }
         if (date == null) {
-            showFieldError(datePicker, dateErrorLabel, "Data é obrigatória."); // CHAMA showFieldError da BaseController
+            showFieldError(datePicker, dateErrorLabel, "Data é obrigatória.");
             isValid = false;
         } else if (date.isAfter(LocalDate.now())) {
-            showFieldError(datePicker, dateErrorLabel, "Data não pode ser futura."); // CHAMA showFieldError da BaseController
+            showFieldError(datePicker, dateErrorLabel, "Data não pode ser futura.");
             isValid = false;
         }
         if (type == null) {
-            showFieldError(typeComboBox, typeErrorLabel, "Tipo é obrigatório."); // CHAMA showFieldError da BaseController
+            showFieldError(typeComboBox, typeErrorLabel, "Tipo é obrigatório.");
             isValid = false;
         }
         if (category == null) {
-            showFieldError(categoryComboBox, categoryErrorLabel, "Categoria é obrigatória."); // CHAMA showFieldError da BaseController
-            isValid = false;
-        }
-        // Validacao adicional: o tipo da transacao deve corresponder ao tipo da categoria
-        if (type != null && category != null && category.getTipo() != type) {
-            showFieldError(categoryComboBox, categoryErrorLabel, "Tipo da categoria não corresponde ao tipo da transação."); // CHAMA showFieldError da BaseController
+            showFieldError(categoryComboBox, categoryErrorLabel, "Categoria é obrigatória.");
             isValid = false;
         }
 
+        if (type != null && category != null && category.getTipo() != type) {
+            showFieldError(categoryComboBox, categoryErrorLabel, "Tipo da categoria não corresponde ao tipo da transação.");
+            isValid = false;
+        }
 
         if (!isValid) {
-            showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados."); // CHAMA showAlert da BaseController
+            showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados.");
             return;
+        }
+
+        // LÓGICA DE VERIFICAÇÃO DE ORÇAMENTO
+        if (type == TipoCategoria.DESPESA) {
+            Orcamento orcamento = service.getOrcamentoCategoria(category, date.getMonthValue(), date.getYear());
+
+            if (orcamento != null) {
+                double gastoAtual = service.getGastoAtualCategoria(category, date.getMonthValue(), date.getYear());
+
+                double valorAntigo = 0.0;
+                if (selectedTransactionId > 0) {
+                    Transacao transacaoOriginal = service.buscarTransacaoPorId(selectedTransactionId);
+
+                    if (transacaoOriginal != null && transacaoOriginal.getCategoria().getId() == category.getId()) {
+                        valorAntigo = transacaoOriginal.getValor();
+                    }
+                }
+
+                double gastoSemEstaTransacao = gastoAtual - valorAntigo;
+                double novoTotalProjetado = gastoSemEstaTransacao + value;
+
+                if (novoTotalProjetado > orcamento.getValorLimite()) {
+                    Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
+                    confirmAlert.setTitle("Orçamento Excedido");
+                    confirmAlert.setHeaderText("Atenção: Esta transação ultrapassa o seu orçamento!");
+                    confirmAlert.setContentText(String.format(
+                            "Categoria: %s\n" +
+                                    "Limite do Mês: R$ %.2f\n\n" +
+                                    "Gasto Atual: R$ %.2f\n" +
+                                    "Com esta transação: R$ %.2f\n" +
+                                    "(Valor excedido: R$ %.2f)\n\n" +
+                                    "Deseja salvar mesmo assim?",
+                            category.getNome(),
+                            orcamento.getValorLimite(),
+                            gastoSemEstaTransacao,
+                            novoTotalProjetado,
+                            novoTotalProjetado - orcamento.getValorLimite()
+                    ));
+
+                    Optional<ButtonType> result = confirmAlert.showAndWait();
+                    if (result.isEmpty() || result.get() != ButtonType.OK) {
+                        return; // Usuário clicou em "Cancelar"
+                    }
+                }
+            }
         }
 
         try {
             if (selectedTransactionId == 0) {
                 service.adicionarTransacao(description, value, date, type, category.getNome());
-                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação adicionada com sucesso!"); // CHAMA showAlert da BaseController
+                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação adicionada com sucesso!");
             } else {
                 Transacao transacaoAtualizada = new Transacao(selectedTransactionId, description, value, date, type, category);
                 service.atualizarTransacao(transacaoAtualizada, category.getNome());
-                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação atualizada com sucesso!"); // CHAMA showAlert da BaseController
+                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação atualizada com sucesso!");
             }
             loadTransactions(searchField.getText());
             handleNewTransaction(null);
         } catch (IllegalArgumentException e) {
-            showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage()); // CHAMA showAlert da BaseController
+            showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage());
         } catch (RuntimeException e) {
-            showAlert(Alert.AlertType.ERROR, "Erro Inesperado", "Ocorreu um erro inesperado: " + e.getMessage()); // CHAMA showAlert da BaseController
+            showAlert(Alert.AlertType.ERROR, "Erro Inesperado", "Ocorreu um erro inesperado: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    /**
-     * Exclui a transacao selecionada da tabela.
-     * @param event O evento de acao.
-     */
     @FXML
     private void handleDeleteTransaction(ActionEvent event) {
         if (selectedTransactionId == 0) {
-            showAlert(Alert.AlertType.WARNING, "Nenhuma Seleção", "Por favor, selecione uma transação na tabela para excluir."); // CHAMA showAlert da BaseController
+            showAlert(Alert.AlertType.WARNING, "Nenhuma Seleção", "Por favor, selecione uma transação na tabela para excluir.");
             return;
         }
 
@@ -267,30 +285,22 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
                 service.excluirTransacao(selectedTransactionId);
-                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação excluída com sucesso!"); // CHAMA showAlert da BaseController
+                showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação excluída com sucesso!");
                 loadTransactions(searchField.getText());
                 handleNewTransaction(null);
             } catch (RuntimeException e) {
-                showAlert(Alert.AlertType.ERROR, "Erro ao Excluir", "Ocorreu um erro ao excluir a transação: " + e.getMessage()); // CHAMA showAlert da BaseController
+                showAlert(Alert.AlertType.ERROR, "Erro ao Excluir", "Ocorreu um erro ao excluir a transação: " + e.getMessage());
                 e.printStackTrace();
             }
         }
     }
 
-
-    /**
-     * Carrega todas as categorias do banco de dados e as adiciona ao ComboBox de categorias.
-     */
     private void loadCategoriesForComboBox() {
         categoriesList.clear();
         categoriesList.addAll(service.listarTodasCategorias());
         categoryComboBox.setItems(categoriesList);
     }
 
-    /**
-     * Filtra as categorias no ComboBox de categorias com base no TipoCategoria selecionado.
-     * @param selectedType O tipo de categoria selecionado (RECEITA ou DESPESA).
-     */
     private void filterCategoriesByType(TipoCategoria selectedType) {
         if (selectedType == null) {
             categoryComboBox.setItems(categoriesList);
@@ -303,24 +313,14 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
             }
         }
         categoryComboBox.setItems(filteredList);
-        categoryComboBox.getSelectionModel().clearSelection(); // Limpa a selecao para forcar nova escolha
+        categoryComboBox.getSelectionModel().clearSelection();
     }
 
-    /**
-     * Carrega todas as transações do banco de dados e as exibe na TableView.
-     * NOVO: Agora aceita um termo de busca
-     * @param searchTerm Termo para filtrar as transacoes.
-     */
     private void loadTransactions(String searchTerm) {
         transactionsData.clear();
         transactionsData.addAll(service.listarTransacoesPorTermo(searchTerm));
     }
 
-
-    /**
-     * Manipula a ação de voltar para o menu principal.
-     * @param event O evento de acao.
-     */
     @FXML
     private void handleGoBack(ActionEvent event) {
         try {
@@ -331,11 +331,11 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
             menuController.setPrimaryStage(primaryStage);
 
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm()); // Carregando CSS
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
             primaryStage.show();
-            Platform.runLater(() -> primaryStage.setMaximized(true)); // Reaplicar maximizacao
+            Platform.runLater(() -> primaryStage.setMaximized(true));
         } catch (IOException e) {
             System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
             e.printStackTrace();
@@ -343,52 +343,8 @@ public class TransactionController extends BaseController { // EXTENDE BASECONTR
         }
     }
 
-    /**
-     * Exibe um alerta para o usuario.
-     * @param type Tipo do alerta (WARNING, INFORMATION, ERROR).
-     * @param title Titulo do alerta.
-     * @param message Mensagem do alerta.
-     */
-    public void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    // --- Métodos Auxiliares para Feedback de Validação (Idênticos aos do CategoryController) ---
-
-    /**
-     * Exibe uma mensagem de erro abaixo de um campo e aplica o estilo de erro.
-     * @param control O controle (TextField, ComboBox, DatePicker) que tem o erro.
-     * @param errorLabel O Label onde a mensagem de erro sera exibida.
-     * @param message A mensagem de erro.
-     */
-    public void showFieldError(Control control, Label errorLabel, String message) {
-        // Verifica se o controle já tem a classe, para não adicionar múltiplas vezes
-        if (!control.getStyleClass().contains("text-field-error")) {
-            control.getStyleClass().add("text-field-error");
-        }
-        errorLabel.setText(message);
-        errorLabel.setVisible(true);
-    }
-
-    /**
-     * Limpa a mensagem de erro de um campo e remove o estilo de erro.
-     * @param control O controle (TextField, ComboBox, DatePicker) cujo erro deve ser limpo.
-     * @param errorLabel O Label associado a mensagem de erro.
-     */
-    public void clearFieldError(Control control, Label errorLabel) {
-        control.getStyleClass().remove("text-field-error");
-        errorLabel.setText("");
-        errorLabel.setVisible(false);
-    }
-
-    /**
-     * Limpa todos os erros visíveis no formulário de transação.
-     */
-    public void clearAllErrors() {
+    @Override
+    protected void clearAllErrors() {
         clearFieldError(descriptionField, descriptionErrorLabel);
         clearFieldError(valueField, valueErrorLabel);
         clearFieldError(datePicker, dateErrorLabel);

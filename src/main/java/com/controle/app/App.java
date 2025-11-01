@@ -1,6 +1,9 @@
 package com.controle.app;
 
 import com.controle.view.MenuController;
+import com.controle.service.GastoPessoalService;
+import com.controle.util.DatabaseConnection; // Import necessário
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,6 +17,39 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
+
+        // --- CORREÇÃO: CRIA AS TABELAS ANTES DE TUDO ---
+        try {
+            System.out.println("Verificando/Criando tabelas no banco de dados...");
+            DatabaseConnection.createTables(); // Chama o método de criação
+            System.out.println("Tabelas verificadas/criadas com sucesso.");
+        } catch (Exception e) {
+            System.err.println("ERRO FATAL: Não foi possível criar as tabelas do banco de dados: " + e.getMessage());
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erro Crítico de Banco de Dados");
+            alert.setHeaderText("Não foi possível conectar ou criar as tabelas no banco de dados.");
+            alert.setContentText("Verifique sua conexão e as configurações em DatabaseConnection.java.\nDetalhes: " + e.getMessage());
+            alert.showAndWait();
+            Platform.exit(); // Fecha a aplicação
+            return; // Interrompe a execução
+        }
+        // --- FIM DA CORREÇÃO ---
+
+        // Roda o processamento em background (agora com a tabela já criada)
+        new Thread(() -> {
+            System.out.println("Iniciando processamento de transações recorrentes em background...");
+            try {
+                GastoPessoalService service = new GastoPessoalService();
+                service.processarTransacoesRecorrentes();
+                System.out.println("Processamento de transações recorrentes finalizado.");
+            } catch (Exception e) {
+                System.err.println("Erro no processamento de recorrentes: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }).start();
+
+
         Parent root = null;
         Scene scene = null;
 
@@ -28,27 +64,23 @@ public class App extends Application {
                 System.err.println("ERRO: MenuController não foi obtido do FXMLLoader!");
             }
 
-            scene = new Scene(root, 700, 750); // Com largura e altura fixas
-
+            scene = new Scene(root, 700, 750);
             scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
 
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
-            primaryStage.setScene(scene); // Define a cena para o palco
+            primaryStage.setScene(scene);
 
-            // AQUI: Deixar a janela em modo FULL SCREEN
             primaryStage.show();
             Platform.runLater(() -> primaryStage.setFullScreen(true));
 
-            // AQUI: REMOVE a dica padrao
-            // primaryStage.setFullScreenExitHint("ESC para sair.");
-
         } catch (IOException e) {
+            // Este é o erro que você está vendo (FXML corrompido)
             System.err.println("ERRO FATAL: Erro de IO ao carregar FXML ou CSS: " + e.getMessage());
             e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Erro de Inicialização");
-            alert.setHeaderText("Não foi possível iniciar a aplicação.");
-            alert.setContentText("Verifique se os arquivos de interface estão no local correto.\nDetalhes: " + e.getMessage());
+            alert.setHeaderText("Não foi possível iniciar a aplicação (Erro de FXML).");
+            alert.setContentText("Verifique o arquivo .fxml para erros de sintaxe.\nDetalhes: " + e.getMessage());
             alert.showAndWait();
         } catch (Exception e) {
             System.err.println("ERRO FATAL: Erro inesperado durante a inicialização: " + e.getMessage());

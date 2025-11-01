@@ -57,7 +57,7 @@ public class ReportsController {
     private ObservableList<CategorySummary> categorySummaryData = FXCollections.observableArrayList();
 
     public ReportsController() {
-        this.service = new GastoPessoalService();
+        this.service = new GastoPessoalService(); //
     }
 
     @FXML
@@ -89,6 +89,12 @@ public class ReportsController {
         endDatePicker.setValue(today);
 
         clearAllErrors();
+
+        // --- INÍCIO DA CORREÇÃO ---
+        // Garante que a tabela de transações está atualizada ANTES de gerar o relatório
+        System.out.println("ReportsController: Verificando transações recorrentes pendentes...");
+        service.processarTransacoesRecorrentes(); //
+        // --- FIM DA CORREÇÃO ---
 
         handleGenerateBalanceReport(null);
         handleGenerateCategoryReport(null);
@@ -242,7 +248,7 @@ public class ReportsController {
 
             Scene scene = new Scene(root);
             // Carregando o CSS na nova Scene
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm()); //
 
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");

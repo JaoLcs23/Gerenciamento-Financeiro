@@ -21,6 +21,10 @@
             </padding>
             <Button mnemonicParsing="false" onAction="#handleManageCategories" prefWidth="200.0" text="Gerenciar Categorias" />
             <Button mnemonicParsing="false" onAction="#handleManageTransactions" prefWidth="200.0" text="Gerenciar Transações" />
+            <Button mnemonicParsing="false" onAction="#handleManageRecurringTransactions" prefWidth="200.0" text="Gerenciar Transações Recorrentes" />
+
+            <Button mnemonicParsing="false" onAction="#handleManageBudgets" prefWidth="200.0" text="Gerenciar Orçamentos" />
+
             <Button mnemonicParsing="false" onAction="#handleViewReports" prefWidth="200.0" text="Visualizar Relatórios" />
             <Button mnemonicParsing="false" onAction="#handleExit" prefWidth="200.0" text="Sair" />
         </VBox>
