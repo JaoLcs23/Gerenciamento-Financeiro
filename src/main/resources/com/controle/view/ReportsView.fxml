@@ -31,7 +31,9 @@
     </top>
 
     <center>
-        <VBox spacing="15"> <Label text="Filtro de Período" styleClass="label-section-header" />
+        <VBox spacing="15">
+
+            <Label text="Filtro de Período" styleClass="label-section-header" />
             <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10 0 10 0;">
                 <Label text="De:" />
                 <DatePicker fx:id="startDatePicker" styleClass="date-picker" prefHeight="40"/>
@@ -42,6 +44,8 @@
                 <Label fx:id="endDateErrorLabel" styleClass="error-message-label"/>
 
                 <Button onAction="#handleGenerateReport" text="GERAR RELATÓRIO" styleClass="button, button-green" prefHeight="40" HBox.hgrow="NEVER" style="-fx-margin-left: 20;"/>
+
+                <Button fx:id="exportPdfButton" onAction="#handleExportPDF" text="EXPORTAR PDF" styleClass="button" prefHeight="40" HBox.hgrow="NEVER" style="-fx-margin-left: 10;" disable="true"/>
             </HBox>
 
             <HBox spacing="25" alignment="CENTER_LEFT" style="-fx-background-color: #f8f8f8; -fx-padding: 15; -fx-background-radius: 8;">

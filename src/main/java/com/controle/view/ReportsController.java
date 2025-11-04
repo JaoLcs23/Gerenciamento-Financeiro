@@ -14,9 +14,17 @@ import javafx.stage.Stage;
 import javafx.scene.Node;
 import javafx.scene.chart.PieChart;
 import javafx.application.Platform;
+import javafx.stage.DirectoryChooser;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Map;
 
@@ -34,9 +42,11 @@ public class ReportsController extends BaseController {
     @FXML private TableColumn<CategorySummary, String> colCategoryName;
     @FXML private TableColumn<CategorySummary, Double> colCategoryAmount;
     @FXML private PieChart categoryPieChart;
+    @FXML private Button exportPdfButton;
 
     private GastoPessoalService service;
     private ObservableList<CategorySummary> categorySummaryData = FXCollections.observableArrayList();
+    private Locale brLocale = new Locale("pt", "BR");
 
     public ReportsController() {
         this.service = new GastoPessoalService();
@@ -53,8 +63,7 @@ public class ReportsController extends BaseController {
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
-                    setText(currencyFormat.format(item));
+                    setText(NumberFormat.getCurrencyInstance(brLocale).format(item));
                 }
             }
         });
@@ -76,7 +85,6 @@ public class ReportsController extends BaseController {
         });
     }
 
-    // Atualiza os labels do balanço (Receita, Despesa, Saldo)
     private void updateTotalBalance() {
         LocalDate startDate = startDatePicker.getValue();
         LocalDate endDate = endDatePicker.getValue();
@@ -94,7 +102,9 @@ public class ReportsController extends BaseController {
             double totalIncome = service.calcularTotalReceitas(startDate, endDate);
             double totalExpenses = service.calcularTotalDespesas(startDate, endDate);
 
-            totalBalanceLabel.setText(String.format("Balanço: R$ %.2f", totalBalance));
+            NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(brLocale);
+
+            totalBalanceLabel.setText(String.format("Balanço: %s", currencyFormat.format(totalBalance)));
             totalBalanceLabel.getStyleClass().removeAll("balance-label-positive", "balance-label-negative");
             if (totalBalance >= 0) {
                 totalBalanceLabel.getStyleClass().add("balance-label-positive");
@@ -102,8 +112,8 @@ public class ReportsController extends BaseController {
                 totalBalanceLabel.getStyleClass().add("balance-label-negative");
             }
 
-            totalIncomeLabel.setText(String.format("Receitas: R$ %.2f", totalIncome));
-            totalExpensesLabel.setText(String.format("Despesas: R$ %.2f", totalExpenses));
+            totalIncomeLabel.setText(String.format("Receitas: %s", currencyFormat.format(totalIncome)));
+            totalExpensesLabel.setText(String.format("Despesas: %s", currencyFormat.format(totalExpenses)));
 
         } catch (RuntimeException e) {
             showAlert(Alert.AlertType.ERROR, "Erro ao Gerar Balanço", "Ocorreu um erro ao gerar o balanço: " + e.getMessage());
@@ -113,16 +123,14 @@ public class ReportsController extends BaseController {
 
     @FXML
     private void handleGenerateReport(ActionEvent event) {
-        // Valida os seletores de data
         if (!validateDatePickers(startDatePicker, endDatePicker, startDateErrorLabel, endDateErrorLabel)) {
             showAlert(Alert.AlertType.WARNING, "Datas Inválidas", "Por favor, corrija as datas do relatório.");
+            exportPdfButton.setDisable(true); // Desabilita se a data for inválida
             return;
         }
 
-        // Atualiza o Balanço
         updateTotalBalance();
 
-        // Atualiza a Tabela e o Gráfico de Categorias
         LocalDate startDate = startDatePicker.getValue();
         LocalDate endDate = endDatePicker.getValue();
 
@@ -133,20 +141,102 @@ public class ReportsController extends BaseController {
             categoryExpensesTable.refresh();
             updateCategoryPieChart(expensesMap);
 
+            exportPdfButton.setDisable(false); // Habilita o botão de PDF
+
         } catch (RuntimeException e) {
             showAlert(Alert.AlertType.ERROR, "Erro ao Gerar Relatório", "Ocorreu um erro ao gerar o relatório de categorias: " + e.getMessage());
             e.printStackTrace();
+            exportPdfButton.setDisable(true);
         }
+    }
+
+    // Método chamado em "EXPORTAR PDF"
+    @FXML
+    private void handleExportPDF(ActionEvent event) {
+        LocalDate startDate = startDatePicker.getValue();
+        LocalDate endDate = endDatePicker.getValue();
+
+        // Escolher onde salvar
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle("Salvar PDF em...");
+        File selectedDirectory = directoryChooser.showDialog(primaryStage);
+
+        if (selectedDirectory == null) {
+            showAlert(Alert.AlertType.INFORMATION, "Cancelado", "Exportação de PDF cancelada.");
+            return;
+        }
+
+        // Criar o nome do arquivo
+        String dateString = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        String fileName = "Relatorio_Financeiro_" + dateString + ".pdf";
+        File file = new File(selectedDirectory, fileName);
+
+        // Gerar o PDF
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+
+            PDPageContentStream contentStream = new PDPageContentStream(document, page);
+
+            float y = 750;
+
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 18, 150, y, "Relatório Financeiro");
+            y -= 30;
+
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12, 70, y,
+                    "Período de: " + startDate.format(dtf) + " a " + endDate.format(dtf));
+            y -= 25;
+
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 70, y, "Balanço do Período");
+            y -= 20;
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12, 70, y, totalIncomeLabel.getText());
+            y -= 20;
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12, 70, y, totalExpensesLabel.getText());
+            y -= 20;
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12, 70, y, totalBalanceLabel.getText());
+            y -= 30;
+
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14, 70, y, "Despesas por Categoria");
+            y -= 20;
+
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12, 70, y, "Categoria");
+            writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12, 350, y, "Valor");
+            y -= 15;
+
+            NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(brLocale);
+            for (CategorySummary summary : categorySummaryData) {
+                writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12, 70, y, summary.getCategoryName());
+                writeText(contentStream, new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12, 350, y, currencyFormat.format(summary.getTotalAmount()));
+                y -= 15;
+            }
+
+            contentStream.close();
+            document.save(file);
+
+            showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Relatório PDF salvo com sucesso em:\n" + file.getAbsolutePath());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro ao Salvar PDF", "Não foi possível salvar o arquivo PDF: " + e.getMessage());
+        }
+    }
+
+    // Método para facilitar a escrita de texto no PDF
+    private void writeText(PDPageContentStream contentStream, PDType1Font font, int fontSize, float x, float y, String text) throws IOException {
+        contentStream.beginText();
+        contentStream.setFont(font, fontSize);
+        contentStream.newLineAtOffset(x, y);
+        contentStream.showText(text);
+        contentStream.endText();
     }
 
     private boolean validateDatePickers(DatePicker start, DatePicker end, Label startError, Label endError) {
         clearFieldError(start, startError);
         clearFieldError(end, endError);
-
         LocalDate startDate = start.getValue();
         LocalDate endDate = end.getValue();
         boolean isValid = true;
-
         if (startDate == null) {
             showFieldError(start, startError, "Data de início obrigatória.");
             isValid = false;
@@ -163,20 +253,16 @@ public class ReportsController extends BaseController {
 
     private void updateCategoryPieChart(Map<String, Double> expensesMap) {
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
-
         if (expensesMap.isEmpty()) {
             categoryPieChart.setData(FXCollections.emptyObservableList());
             categoryPieChart.setTitle("Distribuição de Despesas (Nenhum dado)");
             return;
         }
-
         double totalExpenses = expensesMap.values().stream().mapToDouble(Double::doubleValue).sum();
-
         expensesMap.forEach((categoryName, amount) -> {
             String label = String.format("%s (%.2f%%)", categoryName, (amount / totalExpenses * 100));
             pieChartData.add(new PieChart.Data(label, amount));
         });
-
         categoryPieChart.setData(pieChartData);
         categoryPieChart.setTitle("Distribuição de Despesas por Categoria");
     }
@@ -186,20 +272,15 @@ public class ReportsController extends BaseController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
             Parent root = loader.load();
-
             MenuController menuController = loader.getController();
             menuController.setPrimaryStage(primaryStage);
-
             Scene scene = new Scene(root);
             scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
             primaryStage.show();
-
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-
         } catch (IOException e) {
             System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
             e.printStackTrace();
@@ -209,7 +290,6 @@ public class ReportsController extends BaseController {
 
     @Override
     protected void clearAllErrors() {
-        // Modificado para limpar apenas os seletores de data restantes
         clearFieldError(startDatePicker, startDateErrorLabel);
         clearFieldError(endDatePicker, endDateErrorLabel);
     }
@@ -217,7 +297,6 @@ public class ReportsController extends BaseController {
     public static class CategorySummary {
         private final String categoryName;
         private final Double totalAmount;
-
         public CategorySummary(String categoryName, Double totalAmount) {
             this.categoryName = categoryName;
             this.totalAmount = totalAmount;
