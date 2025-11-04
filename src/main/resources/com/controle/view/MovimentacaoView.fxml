@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.ColumnConstraints?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.controle.view.MovimentacaoController" styleClass="root">
+
+    <top>
+        <VBox alignment="CENTER">
+            <children>
+                <Label fx:id="fullScreenHintLabel" styleClass="full-screen-hint-label" text="" visible="false" />
+                <Label text="MOVIMENTAÇÃO ENTRE CONTAS" styleClass="label-title" />
+            </children>
+        </VBox>
+    </top>
+
+    <padding>
+        <Insets top="0" right="50" bottom="20" left="50"/>
+    </padding>
+
+    <center>
+        <VBox alignment="TOP_CENTER" spacing="20" maxWidth="600">
+            <GridPane hgap="15" vgap="10">
+                <columnConstraints>
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
+                </columnConstraints>
+
+                <Label text="Conta de Origem:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                <ComboBox fx:id="contaOrigemComboBox" promptText="Selecione a origem" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                <Label fx:id="origemErrorLabel" styleClass="error-message-label" minHeight="15" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+
+                <Label text="Conta de Destino:" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                <ComboBox fx:id="contaDestinoComboBox" promptText="Selecione o destino" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                <Label fx:id="destinoErrorLabel" styleClass="error-message-label" minHeight="15" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                <Label text="Valor (R$):" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                <TextField fx:id="valorField" promptText="Ex: 100.00" styleClass="text-field" prefHeight="40" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                <Label fx:id="valorErrorLabel" styleClass="error-message-label" minHeight="15" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+
+                <Label text="Data da Movimentação:" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                <DatePicker fx:id="dataPicker" styleClass="date-picker" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                <Label fx:id="dataErrorLabel" styleClass="error-message-label" minHeight="15" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+            </GridPane>
+
+            <HBox spacing="10" alignment="CENTER" style="-fx-padding: 20 0 0 0;">
+                <Button fx:id="movimentarButton" text="REGISTRAR MOVIMENTAÇÃO" onAction="#handleMovimentar" styleClass="button, button-green" prefHeight="50">
+                    <graphic> <Region styleClass="form-icon, icon-recycle" /> </graphic>
+                </Button>
+                <Button fx:id="limparButton" text="LIMPAR" onAction="#handleLimpar" styleClass="button" prefHeight="50">
+                    <graphic> <Region styleClass="form-icon, icon-clear" /> </graphic>
+                </Button>
+            </HBox>
+        </VBox>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+            <padding> <Insets top="20" bottom="20" /> </padding>
+            <Button onAction="#handleGoBack" text="VOLTAR AO MENU PRINCIPAL" styleClass="button, button-green">
+                <graphic> <Region styleClass="form-icon, icon-home" /> </graphic>
+            </Button>
+        </HBox>
+    </bottom>
+</BorderPane>

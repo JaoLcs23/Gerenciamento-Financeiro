@@ -8,17 +8,16 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
 
 public class ContaDAO extends AbstractDAO<Conta, Integer> {
 
     public ContaDAO() {
-        super();
     }
 
-    @Override
-    public void save(Conta conta) {
+    public void save(Conta conta, Connection conn) {
         String sql = "INSERT INTO contas (nome, saldo_inicial, tipo) OUTPUT INSERTED.id VALUES (?, ?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, conta.getNome());
             stmt.setDouble(2, conta.getSaldoInicial());
             stmt.setString(3, conta.getTipo().name());
@@ -35,9 +34,13 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
     }
 
     @Override
-    public Conta findById(Integer id) {
+    public void save(Conta conta) {
+        throw new UnsupportedOperationException("Use save(Conta, Connection)");
+    }
+
+    public Conta findById(Integer id, Connection conn) {
         String sql = "SELECT * FROM contas WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -52,10 +55,14 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
     }
 
     @Override
-    public List<Conta> findAll() {
+    public Conta findById(Integer id) {
+        throw new UnsupportedOperationException("Use findById(Integer, Connection)");
+    }
+
+    public List<Conta> findAll(Connection conn) {
         List<Conta> contas = new ArrayList<>();
         String sql = "SELECT * FROM contas";
-        try (Statement stmt = connection.createStatement();
+        try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 contas.add(mapResultSetToConta(rs));
@@ -68,9 +75,13 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
     }
 
     @Override
-    public void update(Conta conta) {
+    public List<Conta> findAll() {
+        throw new UnsupportedOperationException("Use findAll(Connection)");
+    }
+
+    public void update(Conta conta, Connection conn) {
         String sql = "UPDATE contas SET nome = ?, saldo_inicial = ?, tipo = ? WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, conta.getNome());
             stmt.setDouble(2, conta.getSaldoInicial());
             stmt.setString(3, conta.getTipo().name());
@@ -86,9 +97,13 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
     }
 
     @Override
-    public void delete(Integer id) {
+    public void update(Conta conta) {
+        throw new UnsupportedOperationException("Use update(Conta, Connection)");
+    }
+
+    public void delete(Integer id, Connection conn) {
         String sql = "DELETE FROM contas WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -97,9 +112,14 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
         }
     }
 
-    public Conta findByNome(String nome) {
+    @Override
+    public void delete(Integer id) {
+        throw new UnsupportedOperationException("Use delete(Integer, Connection)");
+    }
+
+    public Conta findByNome(String nome, Connection conn) {
         String sql = "SELECT * FROM contas WHERE nome = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, nome);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -113,11 +133,10 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
         return null;
     }
 
-    // Busca contas cujos nomes contêm o termo de busca
-    public List<Conta> findAllByNomeLike(String termoBusca) {
+    public List<Conta> findAllByNomeLike(String termoBusca, Connection conn) {
         List<Conta> contas = new ArrayList<>();
         String sql = "SELECT * FROM contas WHERE nome LIKE ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, "%" + termoBusca + "%");
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -131,7 +150,6 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
         return contas;
     }
 
-    // Método auxiliar
     private Conta mapResultSetToConta(ResultSet rs) throws SQLException {
         int id = rs.getInt("id");
         String nome = rs.getString("nome");

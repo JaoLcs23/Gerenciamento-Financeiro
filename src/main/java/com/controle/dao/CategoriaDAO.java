@@ -8,18 +8,16 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
 
-//Implementacao concreta do DAO para a entidade Categoria
 public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
 
     public CategoriaDAO() {
-        super();
     }
 
-    @Override
-    public void save(Categoria categoria) {
+    public void save(Categoria categoria, Connection conn) {
         String sql = "INSERT INTO categorias (nome, tipo) OUTPUT INSERTED.id VALUES (?, ?)";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, categoria.getNome());
             stmt.setString(2, categoria.getTipo().name());
             try (ResultSet rs = stmt.executeQuery()) {
@@ -35,9 +33,13 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
     }
 
     @Override
-    public Categoria findById(Integer id) {
+    public void save(Categoria categoria) {
+        throw new UnsupportedOperationException("Use save(Categoria, Connection)");
+    }
+
+    public Categoria findById(Integer id, Connection conn) {
         String sql = "SELECT id, nome, tipo FROM categorias WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -54,10 +56,14 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
     }
 
     @Override
-    public List<Categoria> findAll() {
+    public Categoria findById(Integer id) {
+        throw new UnsupportedOperationException("Use findById(Integer, Connection)");
+    }
+
+    public List<Categoria> findAll(Connection conn) {
         List<Categoria> categorias = new ArrayList<>();
         String sql = "SELECT id, nome, tipo FROM categorias";
-        try (Statement stmt = connection.createStatement();
+        try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 int id = rs.getInt("id");
@@ -73,9 +79,13 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
     }
 
     @Override
-    public void update(Categoria categoria) {
+    public List<Categoria> findAll() {
+        throw new UnsupportedOperationException("Use findAll(Connection)");
+    }
+
+    public void update(Categoria categoria, Connection conn) {
         String sql = "UPDATE categorias SET nome = ?, tipo = ? WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, categoria.getNome());
             stmt.setString(2, categoria.getTipo().name());
             stmt.setInt(3, categoria.getId());
@@ -92,9 +102,13 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
     }
 
     @Override
-    public void delete(Integer id) {
+    public void update(Categoria categoria) {
+        throw new UnsupportedOperationException("Use update(Categoria, Connection)");
+    }
+
+    public void delete(Integer id, Connection conn) {
         String sql = "DELETE FROM categorias WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
@@ -108,9 +122,14 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
         }
     }
 
-    public Categoria findByNome(String nome) {
+    @Override
+    public void delete(Integer id) {
+        throw new UnsupportedOperationException("Use delete(Integer, Connection)");
+    }
+
+    public Categoria findByNome(String nome, Connection conn) {
         String sql = "SELECT id, nome, tipo FROM categorias WHERE nome = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, nome);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -126,13 +145,10 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
         return null;
     }
 
-    // Busca categorias cujos nomes contêm o termo de busca
-    public List<Categoria> findAllByNomeLike(String termoBusca) {
+    public List<Categoria> findAllByNomeLike(String termoBusca, Connection conn) {
         List<Categoria> categorias = new ArrayList<>();
-        // Usa LIKE para busca parcial e % para curingas
         String sql = "SELECT id, nome, tipo FROM categorias WHERE nome LIKE ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            // Adiciona % no inicio e fim para buscar qualquer ocorrencia
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, "%" + termoBusca + "%");
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {

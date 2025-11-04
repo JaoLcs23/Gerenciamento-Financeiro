@@ -43,7 +43,8 @@
                     <Region styleClass="menu-icon, icon-coins" />
                 </graphic>
             </Button>
-            <Button onAction="#handleManageRecurringTransactions" text="TRANSAÇÕES RECORRENTES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="1">
+
+            <Button onAction="#handleManageMovimentacoes" text="MOVIMENTAÇÕES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="1">
                 <graphic>
                     <Region styleClass="menu-icon, icon-recycle" />
                 </graphic>
@@ -60,7 +61,13 @@
                 </graphic>
             </Button>
 
-            <Button onAction="#handleExit" text="SAIR" styleClass="menu-button, menu-button-blue" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" maxWidth="Infinity">
+            <Button onAction="#handleManageRecurringTransactions" text="TRANSAÇÕES RECORRENTES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" maxWidth="Infinity">
+                <graphic>
+                    <Region styleClass="menu-icon, icon-recycle" />
+                </graphic>
+            </Button>
+
+            <Button onAction="#handleExit" text="SAIR" styleClass="menu-button, menu-button-blue" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2" maxWidth="Infinity">
                 <graphic>
                     <Region styleClass="menu-icon, icon-exit" />
                 </graphic>

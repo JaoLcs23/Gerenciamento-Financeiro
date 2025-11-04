@@ -4,8 +4,12 @@ import com.controle.model.Conta;
 import com.controle.model.TipoConta;
 import com.controle.service.GastoPessoalService;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,11 +18,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 import java.text.NumberFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AccountController extends BaseController {
 
@@ -27,26 +32,42 @@ public class AccountController extends BaseController {
     @FXML private TextField accountNameField;
     @FXML private ComboBox<TipoConta> accountTypeComboBox;
     @FXML private TextField accountSaldoInicialField;
-    @FXML private TableView<Conta> accountTable;
-    @FXML private TableColumn<Conta, Integer> colId;
-    @FXML private TableColumn<Conta, String> colName;
-    @FXML private TableColumn<Conta, TipoConta> colType;
-    @FXML private TableColumn<Conta, Double> colSaldoInicial;
-
+    @FXML private TableView<ContaWrapper> accountTable;
+    @FXML private TableColumn<ContaWrapper, Integer> colId;
+    @FXML private TableColumn<ContaWrapper, String> colName;
+    @FXML private TableColumn<ContaWrapper, TipoConta> colType;
+    @FXML private TableColumn<ContaWrapper, Double> colSaldoInicial;
+    @FXML private TableColumn<ContaWrapper, Double> colSaldoAtual;
     @FXML private Button addAccountButton;
     @FXML private Button updateAccountButton;
     @FXML private Button deleteAccountButton;
     @FXML private Button newAccountButton;
-
     @FXML private Label accountNameErrorLabel;
     @FXML private Label accountTypeErrorLabel;
     @FXML private Label accountSaldoInicialErrorLabel;
 
-    // O Label fullScreenHintLabel é herdado do BaseController
-    // @FXML private Label fullScreenHintLabel;
-
     private GastoPessoalService service;
-    private ObservableList<Conta> contasData = FXCollections.observableArrayList();
+
+    private ObservableList<ContaWrapper> contasData = FXCollections.observableArrayList();
+
+    public static class ContaWrapper {
+        private final Conta conta;
+        private final SimpleDoubleProperty saldoAtual;
+
+        public ContaWrapper(Conta conta) {
+            this.conta = conta;
+            this.saldoAtual = new SimpleDoubleProperty(0.0);
+        }
+
+        public int getId() { return conta.getId(); }
+        public String getNome() { return conta.getNome(); }
+        public TipoConta getTipo() { return conta.getTipo(); }
+        public double getSaldoInicial() { return conta.getSaldoInicial(); }
+        public SimpleDoubleProperty saldoAtualProperty() { return saldoAtual; }
+        public double getSaldoAtual() { return saldoAtual.get(); }
+        public void setSaldoAtual(double saldo) { this.saldoAtual.set(saldo); }
+        public Conta getConta() { return conta; }
+    }
 
     public AccountController() {
         this.service = new GastoPessoalService();
@@ -61,22 +82,13 @@ public class AccountController extends BaseController {
         colType.setCellValueFactory(new PropertyValueFactory<>("tipo"));
         colSaldoInicial.setCellValueFactory(new PropertyValueFactory<>("saldoInicial"));
 
-        // Formata o Saldo Inicial como Moeda (R$)
-        colSaldoInicial.setCellFactory(column -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
-                    setText(currencyFormat.format(item));
-                }
-            }
-        });
+        colSaldoAtual.setCellValueFactory(cellData -> cellData.getValue().saldoAtualProperty().asObject());
+
+        formatCurrencyColumn(colSaldoInicial);
+        formatCurrencyColumn(colSaldoAtual);
 
         accountTable.setItems(contasData);
-        accountTable.setPlaceholder(new Label("Nenhuma conta cadastrada"));
+        accountTable.setPlaceholder(new Label("Carregando contas..."));
 
         loadAccounts("");
         setFormMode(false);
@@ -86,9 +98,35 @@ public class AccountController extends BaseController {
                 (observable, oldValue, newValue) -> showAccountDetails(newValue));
     }
 
-    private void showAccountDetails(Conta conta) {
+    private void formatCurrencyColumn(TableColumn<ContaWrapper, Double> column) {
+        column.setCellFactory(cell -> new TableCell<ContaWrapper, Double>() {
+            private final NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    getStyleClass().remove("balance-label-negative");
+                } else {
+                    setText(currencyFormat.format(item));
+                    if (item < 0) {
+                        if (!getStyleClass().contains("balance-label-negative")) {
+                            getStyleClass().add("balance-label-negative");
+                        }
+                    } else {
+                        getStyleClass().remove("balance-label-negative");
+                    }
+                }
+            }
+        });
+    }
+
+    private void showAccountDetails(ContaWrapper wrapper) {
         clearAllErrors();
-        if (conta != null) {
+        if (wrapper != null) {
+            Conta conta = wrapper.getConta();
+
             selectedAccountId = conta.getId();
             accountNameField.setText(conta.getNome());
             accountTypeComboBox.getSelectionModel().select(conta.getTipo());
@@ -179,7 +217,7 @@ public class AccountController extends BaseController {
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle("Confirmar Exclusão");
         confirmAlert.setHeaderText("Excluir Conta?");
-        confirmAlert.setContentText("Tem certeza? (Transações futuras associadas a esta conta serão afetadas).");
+        confirmAlert.setContentText("Atenção: Todas as transações (normais e recorrentes) associadas a esta conta serão EXCLUÍDAS permanentemente. Continuar?");
 
         Optional<ButtonType> result = confirmAlert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
@@ -195,12 +233,51 @@ public class AccountController extends BaseController {
     }
 
     private void loadAccounts(String searchTerm) {
-        try {
-            contasData.clear();
-            // Precisamos adicionar o 'listarContasPorTermo' no Service
-            contasData.addAll(service.listarContasPorTermo(searchTerm));
-        } catch (Exception e) {
-            Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Erro ao carregar contas", e.getMessage()));
+        accountTable.setPlaceholder(new Label("Buscando contas..."));
+
+        Task<List<ContaWrapper>> loadTask = new Task<>() {
+            @Override
+            protected List<ContaWrapper> call() throws Exception {
+                List<Conta> contas = service.listarContasPorTermo(searchTerm);
+                return contas.stream().map(ContaWrapper::new).collect(Collectors.toList());
+            }
+        };
+
+        loadTask.setOnSucceeded(event -> {
+            contasData.setAll(loadTask.getValue());
+            if (contasData.isEmpty()) {
+                accountTable.setPlaceholder(new Label("Nenhuma conta cadastrada"));
+            }
+            calculateSaldosAsync();
+        });
+
+        loadTask.setOnFailed(event -> {
+            accountTable.setPlaceholder(new Label("Erro ao carregar contas."));
+            showAlert(Alert.AlertType.ERROR, "Erro ao Carregar", "Não foi possível carregar a lista de contas.");
+        });
+
+        new Thread(loadTask).start();
+    }
+
+    private void calculateSaldosAsync() {
+        for (ContaWrapper wrapper : contasData) {
+            Task<Double> saldoTask = new Task<>() {
+                @Override
+                protected Double call() throws Exception {
+                    return service.getSaldoAtual(wrapper.getId());
+                }
+            };
+
+            saldoTask.setOnSucceeded(event -> {
+                wrapper.setSaldoAtual(saldoTask.getValue());
+            });
+
+            saldoTask.setOnFailed(event -> {
+                // ESTA É A LINHA QUE FOI CORRIGIDA
+                System.err.println("Falha ao calcular saldo para conta " + wrapper.getId());
+            });
+
+            new Thread(saldoTask).start();
         }
     }
 

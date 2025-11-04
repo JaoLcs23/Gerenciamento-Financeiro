@@ -185,4 +185,30 @@ public class MenuController extends BaseController {
     @Override
     protected void clearAllErrors() {
     }
+
+    @FXML
+    private void handleManageMovimentacoes(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MovimentacaoView.fxml"));
+            Parent root = loader.load();
+
+            MovimentacaoController movimentacaoController = loader.getController();
+            movimentacaoController.setPrimaryStage(primaryStage);
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
+
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("Controle de Gastos Pessoais - Movimentações");
+            primaryStage.show();
+
+            applyFullScreen();
+            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
+        } catch (IOException e) {
+            System.err.println("Erro ao carregar a tela de movimentações: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar a tela de movimentações.");
+        }
+    }
 }

@@ -14,30 +14,29 @@ import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
 
 public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Integer> {
 
     private final CategoriaDAO categoriaDAO;
-    private final ContaDAO contaDAO; // <-- NOVO
+    private final ContaDAO contaDAO;
 
-    public TransacaoRecorrenteDAO() {
+    public TransacaoRecorrenteDAO(CategoriaDAO categoriaDAO, ContaDAO contaDAO) {
         super();
-        this.categoriaDAO = new CategoriaDAO();
-        this.contaDAO = new ContaDAO(); // <-- NOVO
+        this.categoriaDAO = categoriaDAO;
+        this.contaDAO = contaDAO;
     }
 
-    @Override
-    public void save(TransacaoRecorrente tr) {
-        // SQL ATUALIZADO
+    public void save(TransacaoRecorrente tr, Connection conn) {
         String sql = "INSERT INTO transacoes_recorrentes (descricao, valor, tipo, categoria_id, conta_id, dia_do_mes, data_inicio, data_fim, data_ultimo_processamento) " +
                 "OUTPUT INSERTED.id VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, tr.getDescricao());
             stmt.setDouble(2, tr.getValor());
             stmt.setString(3, tr.getTipo().name());
             stmt.setInt(4, tr.getCategoria().getId());
-            stmt.setInt(5, tr.getConta().getId()); // <-- NOVO CAMPO
+            stmt.setInt(5, tr.getConta().getId());
             stmt.setInt(6, tr.getDiaDoMes());
             stmt.setDate(7, Date.valueOf(tr.getDataInicio()));
 
@@ -65,13 +64,17 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
     }
 
     @Override
-    public TransacaoRecorrente findById(Integer id) {
+    public void save(TransacaoRecorrente tr) {
+        throw new UnsupportedOperationException("Use save(TransacaoRecorrente, Connection)");
+    }
+
+    public TransacaoRecorrente findById(Integer id, Connection conn) {
         String sql = "SELECT * FROM transacoes_recorrentes WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapResultSetToTransacaoRecorrente(rs);
+                    return mapResultSetToTransacaoRecorrente(rs, conn);
                 }
             }
         } catch (SQLException e) {
@@ -82,13 +85,17 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
     }
 
     @Override
-    public List<TransacaoRecorrente> findAll() {
+    public TransacaoRecorrente findById(Integer id) {
+        throw new UnsupportedOperationException("Use findById(Integer, Connection)");
+    }
+
+    public List<TransacaoRecorrente> findAll(Connection conn) {
         List<TransacaoRecorrente> lista = new ArrayList<>();
         String sql = "SELECT * FROM transacoes_recorrentes";
-        try (Statement stmt = connection.createStatement();
+        try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                lista.add(mapResultSetToTransacaoRecorrente(rs));
+                lista.add(mapResultSetToTransacaoRecorrente(rs, conn));
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar todas as transações recorrentes: " + e.getMessage());
@@ -98,18 +105,21 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
     }
 
     @Override
-    public void update(TransacaoRecorrente tr) {
-        // SQL ATUALIZADO
+    public List<TransacaoRecorrente> findAll() {
+        throw new UnsupportedOperationException("Use findAll(Connection)");
+    }
+
+    public void update(TransacaoRecorrente tr, Connection conn) {
         String sql = "UPDATE transacoes_recorrentes SET descricao = ?, valor = ?, tipo = ?, categoria_id = ?, conta_id = ?, " +
                 "dia_do_mes = ?, data_inicio = ?, data_fim = ?, data_ultimo_processamento = ? " +
                 "WHERE id = ?";
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, tr.getDescricao());
             stmt.setDouble(2, tr.getValor());
             stmt.setString(3, tr.getTipo().name());
             stmt.setInt(4, tr.getCategoria().getId());
-            stmt.setInt(5, tr.getConta().getId()); // <-- NOVO CAMPO
+            stmt.setInt(5, tr.getConta().getId());
             stmt.setInt(6, tr.getDiaDoMes());
             stmt.setDate(7, Date.valueOf(tr.getDataInicio()));
 
@@ -125,8 +135,7 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
                 stmt.setNull(9, Types.DATE);
             }
 
-            stmt.setInt(10, tr.getId()); // ID é o 10º parâmetro
-
+            stmt.setInt(10, tr.getId());
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Erro ao atualizar transação recorrente: " + e.getMessage());
@@ -135,9 +144,13 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
     }
 
     @Override
-    public void delete(Integer id) {
+    public void update(TransacaoRecorrente tr) {
+        throw new UnsupportedOperationException("Use update(TransacaoRecorrente, Connection)");
+    }
+
+    public void delete(Integer id, Connection conn) {
         String sql = "DELETE FROM transacoes_recorrentes WHERE id = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -146,18 +159,23 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         }
     }
 
-    public List<TransacaoRecorrente> findAllAtivas(LocalDate dataReferencia) {
+    @Override
+    public void delete(Integer id) {
+        throw new UnsupportedOperationException("Use delete(Integer, Connection)");
+    }
+
+    public List<TransacaoRecorrente> findAllAtivas(LocalDate dataReferencia, Connection conn) {
         List<TransacaoRecorrente> lista = new ArrayList<>();
         String sql = "SELECT * FROM transacoes_recorrentes " +
                 "WHERE data_inicio <= ? AND (data_fim IS NULL OR data_fim >= ?)";
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setDate(1, Date.valueOf(dataReferencia));
             stmt.setDate(2, Date.valueOf(dataReferencia));
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapResultSetToTransacaoRecorrente(rs));
+                    lista.add(mapResultSetToTransacaoRecorrente(rs, conn));
                 }
             }
         } catch (SQLException e) {
@@ -167,15 +185,15 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         return lista;
     }
 
-    public List<TransacaoRecorrente> findAllByDescriptionLike(String termoBusca) {
+    public List<TransacaoRecorrente> findAllByDescriptionLike(String termoBusca, Connection conn) {
         List<TransacaoRecorrente> lista = new ArrayList<>();
         String sql = "SELECT * FROM transacoes_recorrentes WHERE descricao LIKE ?";
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, "%" + termoBusca + "%");
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(mapResultSetToTransacaoRecorrente(rs));
+                    lista.add(mapResultSetToTransacaoRecorrente(rs, conn));
                 }
             }
         } catch (SQLException e) {
@@ -185,8 +203,7 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         return lista;
     }
 
-    private TransacaoRecorrente mapResultSetToTransacaoRecorrente(ResultSet rs) throws SQLException {
-        // Usa o construtor vazio
+    private TransacaoRecorrente mapResultSetToTransacaoRecorrente(ResultSet rs, Connection conn) throws SQLException {
         TransacaoRecorrente tr = new TransacaoRecorrente();
         tr.setId(rs.getInt("id"));
         tr.setDescricao(rs.getString("descricao"));
@@ -196,27 +213,17 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         tr.setDataInicio(rs.getDate("data_inicio").toLocalDate());
 
         Date dataFimSQL = rs.getDate("data_fim");
-        if (dataFimSQL != null) {
-            tr.setDataFim(dataFimSQL.toLocalDate());
-        } else {
-            tr.setDataFim(null);
-        }
+        tr.setDataFim(dataFimSQL != null ? dataFimSQL.toLocalDate() : null);
 
         Date dataUltimoSQL = rs.getDate("data_ultimo_processamento");
-        if (dataUltimoSQL != null) {
-            tr.setDataUltimoProcessamento(dataUltimoSQL.toLocalDate());
-        } else {
-            tr.setDataUltimoProcessamento(null);
-        }
+        tr.setDataUltimoProcessamento(dataUltimoSQL != null ? dataUltimoSQL.toLocalDate() : null);
 
-        // Busca Categoria (não pode ser nula)
         int categoriaId = rs.getInt("categoria_id");
-        Categoria cat = categoriaDAO.findById(categoriaId);
+        Categoria cat = categoriaDAO.findById(categoriaId, conn);
         tr.setCategoria(cat);
 
-        // Busca Conta (não pode ser nula)
         int contaId = rs.getInt("conta_id");
-        Conta conta = contaDAO.findById(contaId);
+        Conta conta = contaDAO.findById(contaId, conn);
         tr.setConta(conta);
 
         return tr;

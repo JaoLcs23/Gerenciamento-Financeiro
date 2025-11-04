@@ -1,4 +1,3 @@
-// src/main/java/com/meuprojeto/gastospessoais/dao/GenericDAO.java
 package com.controle.dao;
 
 import java.util.List;
