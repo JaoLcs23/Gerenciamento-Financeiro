@@ -4,7 +4,6 @@ import com.controle.model.Categoria;
 import com.controle.model.Orcamento;
 import com.controle.model.TipoCategoria;
 import com.controle.service.GastoPessoalService;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -15,7 +14,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-
+import javafx.application.Platform;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
@@ -25,21 +24,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * Controlador para a tela de gerenciamento de Orçamentos.
- * Estende BaseController.
- */
 public class BudgetController extends BaseController {
 
     private int selectedBudgetId = 0;
 
-    // Componentes FXML do Formulário
+    @FXML private Label fullScreenHintLabel;
     @FXML private ComboBox<Categoria> categoryComboBox;
     @FXML private TextField valorLimiteField;
     @FXML private ComboBox<Integer> mesComboBox;
     @FXML private ComboBox<Integer> anoComboBox;
-
-    // Componentes FXML da Tabela e Filtros
     @FXML private TableView<Orcamento> budgetTable;
     @FXML private TableColumn<Orcamento, Integer> colId;
     @FXML private TableColumn<Orcamento, Categoria> colCategoria;
@@ -48,20 +41,15 @@ public class BudgetController extends BaseController {
     @FXML private TableColumn<Orcamento, Integer> colAno;
     @FXML private ComboBox<Integer> filtroMesComboBox;
     @FXML private ComboBox<Integer> filtroAnoComboBox;
-
-    // Botões
     @FXML private Button addBudgetButton;
     @FXML private Button updateBudgetButton;
     @FXML private Button deleteBudgetButton;
     @FXML private Button newBudgetButton;
-
-    // Labels de Erro
     @FXML private Label categoryErrorLabel;
     @FXML private Label valorLimiteErrorLabel;
     @FXML private Label mesErrorLabel;
     @FXML private Label anoErrorLabel;
 
-    // Camada de Serviço e Listas
     private GastoPessoalService service;
     private ObservableList<Orcamento> orcamentosData = FXCollections.observableArrayList();
     private ObservableList<Categoria> categoriesList = FXCollections.observableArrayList();
@@ -72,7 +60,6 @@ public class BudgetController extends BaseController {
 
     @FXML
     public void initialize() {
-        // Popula os ComboBoxes de Mês e Ano
         ObservableList<Integer> meses = FXCollections.observableArrayList(IntStream.rangeClosed(1, 12).boxed().collect(Collectors.toList()));
         mesComboBox.setItems(meses);
         filtroMesComboBox.setItems(meses);
@@ -82,35 +69,25 @@ public class BudgetController extends BaseController {
         anoComboBox.setItems(anos);
         filtroAnoComboBox.setItems(anos);
 
-        // Define os filtros padrão
         filtroMesComboBox.setValue(LocalDate.now().getMonthValue());
         filtroAnoComboBox.setValue(anoAtual);
 
-        // Carrega apenas categorias de DESPESA no formulário
         loadCategoriesForComboBox();
-
-        // Configura as Colunas da Tabela
         setupTableColumns();
 
-        // Listeners dos filtros
         filtroMesComboBox.setOnAction(e -> loadBudgets());
         filtroAnoComboBox.setOnAction(e -> loadBudgets());
 
-        // Listener da seleção da tabela
         budgetTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showBudgetDetails(newValue));
 
-        loadBudgets(); // Carga inicial
+        loadBudgets();
         setFormMode(false);
         clearAllErrors();
     }
 
-    /**
-     * Carrega as categorias do tipo DESPESA no ComboBox do formulário.
-     */
     private void loadCategoriesForComboBox() {
         categoriesList.clear();
-        // Filtra para mostrar APENAS categorias de despesa
         categoriesList.addAll(service.listarTodasCategorias().stream()
                 .filter(c -> c.getTipo() == TipoCategoria.DESPESA)
                 .collect(Collectors.toList()));
@@ -124,7 +101,6 @@ public class BudgetController extends BaseController {
         colMes.setCellValueFactory(new PropertyValueFactory<>("mes"));
         colAno.setCellValueFactory(new PropertyValueFactory<>("ano"));
 
-        // Formatação de Células
         colValorLimite.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
@@ -147,16 +123,19 @@ public class BudgetController extends BaseController {
         });
 
         budgetTable.setItems(orcamentosData);
+        budgetTable.setPlaceholder(new Label("Nenhum orçamento encontrado"));
     }
 
-    /**
-     * Carrega/Recarrega os orçamentos na tabela com base nos filtros.
-     */
     private void loadBudgets() {
-        orcamentosData.clear();
-        Integer mes = filtroMesComboBox.getValue();
-        Integer ano = filtroAnoComboBox.getValue();
-        orcamentosData.addAll(service.listarOrcamentosPorPeriodo(mes, ano));
+        try {
+            orcamentosData.clear();
+            Integer mes = filtroMesComboBox.getValue();
+            Integer ano = filtroAnoComboBox.getValue();
+            orcamentosData.addAll(service.listarOrcamentosPorPeriodo(mes, ano));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Erro ao carregar orçamentos", e.getMessage()));
+        }
     }
 
     private void showBudgetDetails(Orcamento orcamento) {
@@ -196,7 +175,6 @@ public class BudgetController extends BaseController {
     private void handleAddOrUpdateBudget(ActionEvent event) {
         clearAllErrors();
 
-        // Coleta e Validação
         Categoria categoria = categoryComboBox.getValue();
         Integer mes = mesComboBox.getValue();
         Integer ano = anoComboBox.getValue();
@@ -237,7 +215,6 @@ public class BudgetController extends BaseController {
             return;
         }
 
-        // Persistência
         try {
             Orcamento orcamento = new Orcamento(categoria, valor, mes, ano);
 
@@ -249,10 +226,9 @@ public class BudgetController extends BaseController {
                 service.atualizarOrcamento(orcamento);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Orçamento atualizado!");
             }
-            loadBudgets(); // Recarrega a tabela
-            handleNewBudget(null); // Limpa o formulário
+            loadBudgets();
+            handleNewBudget(null);
         } catch (RuntimeException e) {
-            // Captura o erro de UNIQUE (UQ_Categoria_Mes_Ano) do DAO
             showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage());
         }
     }
@@ -297,6 +273,7 @@ public class BudgetController extends BaseController {
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
             primaryStage.show();
+
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
         } catch (IOException e) {

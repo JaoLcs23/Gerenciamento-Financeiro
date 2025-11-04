@@ -12,79 +12,95 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.ColumnConstraints?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.controle.view.TransactionController" styleClass="root">
     <top>
-        <Label fx:id="fullScreenHintLabel" styleClass="full-screen-hint-label" text="" visible="false" BorderPane.alignment="CENTER">
-            <BorderPane.margin>
-                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-            </BorderPane.margin>
-        </Label>
+        <VBox alignment="CENTER">
+            <children>
+                <Label fx:id="fullScreenHintLabel" styleClass="full-screen-hint-label" text="" visible="false" />
+                <Label text="GERENCIAMENTO DE TRANSAÇÕES" styleClass="label-title" />
+            </children>
+        </VBox>
     </top>
 
     <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+        <Insets top="0" right="50" bottom="20" left="50"/>
     </padding>
 
     <center>
-        <VBox alignment="CENTER" spacing="10" VBox.vgrow="ALWAYS">
-            <Label styleClass="label-title" text="Gerenciamento de Transações" />
+        <VBox alignment="TOP_CENTER" spacing="15">
 
-            <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Buscar Descrição:" />
-                <TextField fx:id="searchField" promptText="Digite para buscar..." HBox.hgrow="ALWAYS" styleClass="text-field"/>
-            </HBox>
-
-            <GridPane hgap="10.0" vgap="5">
-                <children>
-                    <Label text="Descrição:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
-                    <TextField fx:id="descriptionField" promptText="Ex: Compra de mercado" GridPane.columnIndex="1" GridPane.rowIndex="0" styleClass="text-field" GridPane.columnSpan="3"/>
-                    <Label fx:id="descriptionErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3"/>
-
-                    <Label text="Valor:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                    <TextField fx:id="valueField" promptText="Ex: 50.00" GridPane.columnIndex="1" GridPane.rowIndex="2" styleClass="text-field" />
-                    <Label text="Tipo:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
-                    <ComboBox fx:id="typeComboBox" promptText="Selecione o tipo" GridPane.columnIndex="3" GridPane.rowIndex="2" styleClass="combo-box"/>
-                    <Label fx:id="valueErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                    <Label fx:id="typeErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
-
-                    <Label text="Data:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                    <DatePicker fx:id="datePicker" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                    <Label text="Categoria:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
-                    <ComboBox fx:id="categoryComboBox" promptText="Selecione a categoria" GridPane.columnIndex="3" GridPane.rowIndex="4" styleClass="combo-box"/>
-                    <Label fx:id="dateErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-                    <Label fx:id="categoryErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
-                </children>
+            <GridPane hgap="15" vgap="10">
                 <columnConstraints>
-                    <javafx.scene.layout.ColumnConstraints hgrow="NEVER" prefWidth="80.0" />
-                    <javafx.scene.layout.ColumnConstraints hgrow="ALWAYS" prefWidth="180.0" />
-                    <javafx.scene.layout.ColumnConstraints hgrow="NEVER" prefWidth="60.0" />
-                    <javafx.scene.layout.ColumnConstraints hgrow="ALWAYS" prefWidth="180.0" />
+                    <ColumnConstraints hgrow="NEVER" minWidth="80"/>
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
+                    <ColumnConstraints hgrow="NEVER" minWidth="80"/>
+                    <ColumnConstraints hgrow="ALWAYS" minWidth="250"/>
                 </columnConstraints>
+
+                <Label text="Descrição:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                <TextField fx:id="descriptionField" promptText="Ex: Compra de mercado" styleClass="text-field" prefHeight="40" GridPane.columnIndex="1" GridPane.rowIndex="0" GridPane.columnSpan="3"/>
+                <Label fx:id="descriptionErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.columnSpan="3"/>
+
+                <Label text="Valor (R$):" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                <TextField fx:id="valueField" promptText="Ex: 50.00" styleClass="text-field" prefHeight="40" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                <Label fx:id="valueErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+                <Label text="Tipo:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                <ComboBox fx:id="typeComboBox" promptText="Selecione o tipo" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                <Label fx:id="typeErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+
+                <Label text="Data:" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                <DatePicker fx:id="datePicker" styleClass="date-picker" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                <Label fx:id="dateErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+
+                <Label text="Categoria:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+                <ComboBox fx:id="categoryComboBox" promptText="Selecione a categoria" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
+                <Label fx:id="categoryErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
             </GridPane>
 
             <HBox spacing="10" alignment="CENTER">
-                <Button fx:id="addTransactionButton" text="Adicionar Transação" onAction="#handleAddOrUpdateTransaction" styleClass="button"/>
-                <Button fx:id="updateTransactionButton" text="Atualizar Transação" onAction="#handleAddOrUpdateTransaction" disable="true" styleClass="button"/>
-                <Button fx:id="deleteTransactionButton" text="Excluir Transação" onAction="#handleDeleteTransaction" disable="true" styleClass="button"/>
-                <Button fx:id="newTransactionButton" text="Novo" onAction="#handleNewTransaction" styleClass="button"/>
+                <Button fx:id="addTransactionButton" text="ADICIONAR" onAction="#handleAddOrUpdateTransaction" styleClass="button, button-green" prefHeight="40">
+                    <graphic> <Region styleClass="form-icon, icon-add" /> </graphic>
+                </Button>
+                <Button fx:id="updateTransactionButton" text="ATUALIZAR" onAction="#handleAddOrUpdateTransaction" disable="true" styleClass="button" prefHeight="40">
+                    <graphic> <Region styleClass="form-icon, icon-update" /> </graphic>
+                </Button>
+                <Button fx:id="deleteTransactionButton" text="EXCLUIR" onAction="#handleDeleteTransaction" disable="true" styleClass="button, button-red" prefHeight="40">
+                    <graphic> <Region styleClass="form-icon, icon-delete" /> </graphic>
+                </Button>
+                <Button fx:id="newTransactionButton" text="LIMPAR" onAction="#handleNewTransaction" styleClass="button" prefHeight="40">
+                    <graphic> <Region styleClass="form-icon, icon-clear" /> </graphic>
+                </Button>
             </HBox>
 
-            <Label styleClass="label-section-header" text="Lista de Transações" />
+            <Label text="Transações Recentes" styleClass="label-section-header"/>
+            <TextField fx:id="searchField" promptText="Buscar por descrição..." styleClass="text-field" prefHeight="40"/>
+
             <TableView fx:id="transactionTable" VBox.vgrow="ALWAYS" styleClass="table-view">
                 <columns>
-                    <TableColumn fx:id="colId" prefWidth="40.0" text="ID" />
-                    <TableColumn fx:id="colDescription" prefWidth="180.0" text="Descrição" />
-                    <TableColumn fx:id="colValue" prefWidth="80.0" text="Valor" />
-                    <TableColumn fx:id="colDate" prefWidth="100.0" text="Data" />
-                    <TableColumn fx:id="colType" prefWidth="80.0" text="Tipo" />
-                    <TableColumn fx:id="colCategory" prefWidth="120.0" text="Categoria" />
+                    <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+                    <TableColumn fx:id="colDescription" text="Descrição" prefWidth="250"/>
+                    <TableColumn fx:id="colValue" text="Valor" prefWidth="100"/>
+                    <TableColumn fx:id="colDate" text="Data" prefWidth="100"/>
+                    <TableColumn fx:id="colType" text="Tipo" prefWidth="100"/>
+                    <TableColumn fx:id="colCategory" text="Categoria" prefWidth="150"/>
                 </columns>
+                <columnResizePolicy>
+                    <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                </columnResizePolicy>
             </TableView>
         </VBox>
     </center>
 
     <bottom>
-        <Button onAction="#handleGoBack" text="Voltar para o Menu Principal" styleClass="button" BorderPane.alignment="CENTER" />
+        <HBox alignment="CENTER" BorderPane.alignment="CENTER">
+            <padding> <Insets top="20" bottom="20" /> </padding>
+            <Button onAction="#handleGoBack" text="VOLTAR AO MENU PRINCIPAL" styleClass="button, button-green">
+                <graphic> <Region styleClass="form-icon, icon-home" /> </graphic>
+            </Button>
+        </HBox>
     </bottom>
 </BorderPane>

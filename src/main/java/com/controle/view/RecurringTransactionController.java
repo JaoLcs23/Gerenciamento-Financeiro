@@ -4,7 +4,6 @@ import com.controle.model.Categoria;
 import com.controle.model.TipoCategoria;
 import com.controle.model.TransacaoRecorrente;
 import com.controle.service.GastoPessoalService;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -15,23 +14,21 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
-
+import javafx.application.Platform;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-/**
- * Controlador para a tela de gerenciamento de Transações Recorrentes.
- * Estende BaseController para herdar a funcionalidade de alertas e full-screen.
- */
-public class RecurringTransactionController extends BaseController { //
+public class RecurringTransactionController extends BaseController {
 
     private int selectedRecurringId = 0;
 
-    // --- Componentes FXML do Formulário ---
+    @FXML private Label fullScreenHintLabel;
+
     @FXML private TextField descriptionField;
     @FXML private TextField valueField;
     @FXML private ComboBox<TipoCategoria> typeComboBox;
@@ -40,7 +37,6 @@ public class RecurringTransactionController extends BaseController { //
     @FXML private DatePicker dataInicioPicker;
     @FXML private DatePicker dataFimPicker;
 
-    // --- Componentes FXML da Tabela ---
     @FXML private TableView<TransacaoRecorrente> recurringTransactionTable;
     @FXML private TableColumn<TransacaoRecorrente, Integer> colId;
     @FXML private TableColumn<TransacaoRecorrente, String> colDescription;
@@ -51,13 +47,11 @@ public class RecurringTransactionController extends BaseController { //
     @FXML private TableColumn<TransacaoRecorrente, LocalDate> colDataFim;
     @FXML private TableColumn<TransacaoRecorrente, LocalDate> colUltimoProcessamento;
 
-    // --- Botões ---
     @FXML private Button addRecurringButton;
     @FXML private Button updateRecurringButton;
     @FXML private Button deleteRecurringButton;
     @FXML private Button newRecurringButton;
 
-    // --- Labels de Erro ---
     @FXML private Label descriptionErrorLabel;
     @FXML private Label valueErrorLabel;
     @FXML private Label typeErrorLabel;
@@ -66,37 +60,31 @@ public class RecurringTransactionController extends BaseController { //
     @FXML private Label dataInicioErrorLabel;
     @FXML private Label dataFimErrorLabel;
 
-    // --- Busca ---
     @FXML private TextField searchField;
 
-    // --- Camada de Serviço e Listas ---
     private GastoPessoalService service;
     private ObservableList<TransacaoRecorrente> recurringTransactionsData = FXCollections.observableArrayList();
     private ObservableList<Categoria> categoriesList = FXCollections.observableArrayList();
 
     public RecurringTransactionController() {
-        this.service = new GastoPessoalService(); //
+        this.service = new GastoPessoalService();
     }
 
     @FXML
     public void initialize() {
-        typeComboBox.getItems().setAll(TipoCategoria.values()); //
+        typeComboBox.getItems().setAll(TipoCategoria.values());
         loadCategoriesForComboBox();
 
-        // Filtra categorias quando o tipo (receita/despesa) muda
         typeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             filterCategoriesByType(newValue);
         });
 
-        // Configuração das Colunas da Tabela
         setupTableColumns();
 
-        // Listener da busca
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             loadRecurringTransactions(newValue);
         });
 
-        // Listener da seleção da tabela
         recurringTransactionTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showRecurringDetails(newValue));
 
@@ -115,7 +103,6 @@ public class RecurringTransactionController extends BaseController { //
         colDataFim.setCellValueFactory(new PropertyValueFactory<>("dataFim"));
         colUltimoProcessamento.setCellValueFactory(new PropertyValueFactory<>("dataUltimoProcessamento"));
 
-        // Formatação de Células (igual ao TransactionController)
         colValue.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
@@ -138,6 +125,7 @@ public class RecurringTransactionController extends BaseController { //
         });
 
         recurringTransactionTable.setItems(recurringTransactionsData);
+        recurringTransactionTable.setPlaceholder(new Label("Nenhuma recorrência encontrada"));
     }
 
     private void showRecurringDetails(TransacaoRecorrente tr) {
@@ -185,12 +173,11 @@ public class RecurringTransactionController extends BaseController { //
     private void handleAddOrUpdateRecurringTransaction(ActionEvent event) {
         clearAllErrors();
 
-        // --- Coleta e Validação ---
         String description = descriptionField.getText();
         TipoCategoria type = typeComboBox.getSelectionModel().getSelectedItem();
         Categoria category = categoryComboBox.getSelectionModel().getSelectedItem();
         LocalDate dataInicio = dataInicioPicker.getValue();
-        LocalDate dataFim = dataFimPicker.getValue(); // Pode ser nulo
+        LocalDate dataFim = dataFimPicker.getValue();
 
         double value = 0.0;
         int diaDoMes = 0;
@@ -250,7 +237,6 @@ public class RecurringTransactionController extends BaseController { //
             return;
         }
 
-        // --- Persistência ---
         try {
             TransacaoRecorrente tr = new TransacaoRecorrente();
             tr.setDescricao(description.trim());
@@ -259,14 +245,13 @@ public class RecurringTransactionController extends BaseController { //
             tr.setCategoria(category);
             tr.setDiaDoMes(diaDoMes);
             tr.setDataInicio(dataInicio);
-            tr.setDataFim(dataFim); // Seta nulo se dataFim for nulo
+            tr.setDataFim(dataFim);
 
             if (selectedRecurringId == 0) {
                 service.adicionarTransacaoRecorrente(tr);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação recorrente adicionada!");
             } else {
                 tr.setId(selectedRecurringId);
-                // Precisamos preservar o 'dataUltimoProcessamento' ao atualizar
                 TransacaoRecorrente existente = service.buscarTransacaoRecorrentePorId(selectedRecurringId);
                 if(existente != null) {
                     tr.setDataUltimoProcessamento(existente.getDataUltimoProcessamento());
@@ -312,12 +297,14 @@ public class RecurringTransactionController extends BaseController { //
     }
 
     private void loadRecurringTransactions(String searchTerm) {
-        recurringTransactionsData.clear();
-        // Precisamos de um método de busca no service/DAO
-        recurringTransactionsData.addAll(service.listarTransacoesRecorrentesPorTermo(searchTerm));
+        try {
+            recurringTransactionsData.clear();
+            recurringTransactionsData.addAll(service.listarTransacoesRecorrentesPorTermo(searchTerm));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Erro ao carregar recorrências", e.getMessage()));
+        }
     }
-
-    // --- Métodos de Categoria (iguais ao TransactionController) ---
 
     private void loadCategoriesForComboBox() {
         categoriesList.clear();
@@ -343,19 +330,20 @@ public class RecurringTransactionController extends BaseController { //
     @FXML
     private void handleGoBack(ActionEvent event) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml")); //
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
             Parent root = loader.load();
 
-            MenuController menuController = loader.getController(); //
+            MenuController menuController = loader.getController();
             menuController.setPrimaryStage(primaryStage);
 
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm()); //
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
             primaryStage.show();
-            applyFullScreen(); // Método herdado do BaseController
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000); // Método herdado
+
+            applyFullScreen();
+            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
         } catch (IOException e) {
             System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
             e.printStackTrace();
@@ -365,7 +353,6 @@ public class RecurringTransactionController extends BaseController { //
 
     @Override
     protected void clearAllErrors() {
-        // Usa o método clearFieldError herdado do BaseController
         clearFieldError(descriptionField, descriptionErrorLabel);
         clearFieldError(valueField, valueErrorLabel);
         clearFieldError(typeComboBox, typeErrorLabel);

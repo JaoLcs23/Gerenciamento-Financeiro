@@ -1,185 +1,193 @@
-/* src/main/resources/com/controle/view/style.css */
-
-/* Paleta de Cores Sugerida:
-   Primário: #4CAF50 (Verde)
-   Secundário: #2196F3 (Azul)
-   Fundo: #E8F5E9 (Verde muito claro)
+/* Paleta de Cores
+   Fundo: #f0f2f5
    Texto Escuro: #333333
-   Texto Claro: #FFFFFF
-   Sucesso: #4CAF50
-   Erro/Alerta: #F44336
-   Info: #2196F3
+   Verde: #6abf8c / #4a9c8c
+   Azul/Ação: #6c7a89 / #586572
+   Erro: #F44336
+   Branco: #FFFFFF
 */
 
-/* Estilo geral para o fundo da aplicação */
+/* --- 1. ESTILOS GERAIS DA APLICAÇÃO --- */
+
 .root {
-    -fx-background-color: linear-gradient(to bottom, #e0e0e0, #f8f8f8); /* Gradiente suave */
-    -fx-font-family: "Segoe UI", "Roboto", sans-serif; /* Prioriza fontes mais modernas */
-    -fx-font-size: 13px; /* Tamanho base da fonte */
+    -fx-background-color: linear-gradient(to bottom, #f0f2f5, #ffffff);
+    -fx-font-family: "Segoe UI", "Roboto", sans-serif;
+    -fx-font-size: 14px;
 }
 
-/* Estilo para todos os Labels de titulo */
 .label-title {
-    -fx-font-size: 28px; /* Aumentar um pouco mais */
+    -fx-font-size: 28px;
     -fx-font-weight: bold;
-    -fx-text-fill: #333333; /* Texto cinza escuro */
-    -fx-padding: 10px 0;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 3, 0, 0, 1); /* Sombra de texto suave */
+    -fx-text-fill: #333333;
+    -fx-padding: 20px 0 30px 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 3, 0, 0, 1);
 }
 
-/* Estilo para os Labels de subtitulo/secao */
 .label-section-header {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #555555;
-    -fx-padding: 15px 0 5px 0; /* Mais padding superior */
-    -fx-border-color: #bbbbbb; /* Borda inferior sutil */
+    -fx-padding: 15px 0 5px 0;
+    -fx-border-color: #bbbbbb;
     -fx-border-width: 0 0 1px 0;
-    -fx-background-color: transparent; /* Certifica que nao tem fundo */
-    -fx-pref-width: 100%; /* Ocupa a largura total */
+    -fx-pref-width: 100%;
 }
 
-/* Estilo para botões */
+/* --- 2. ESTILOS DE FORMULÁRIO (GENÉRICOS) --- */
+
+/* Botão Padrão (Azul/Cinzento) */
 .button {
-    -fx-background-color: linear-gradient(to bottom, #4CAF50, #45a049); /* Gradiente verde */
+    -fx-background-color: linear-gradient(to bottom, #6c7a89, #586572);
     -fx-text-fill: white;
-    -fx-font-size: 14px;
-    -fx-padding: 8px 18px; /* Mais padding horizontal */
-    -fx-border-radius: 6px; /* Cantos mais arredondados */
+    -fx-font-size: 13px; /* Um pouco menor para formulários */
+    -fx-font-weight: bold;
+    -fx-padding: 8px 18px;
+    -fx-border-radius: 6px;
     -fx-background-radius: 6px;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 8, 0, 0, 2); /* Sombra mais pronunciada */
-    -fx-alignment: CENTER; /* Centraliza texto e ícone se houver */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);
+    -fx-alignment: CENTER;
+    -fx-graphic-text-gap: 8px; /* Espaço para ícones */
 }
-
-/* Efeito ao passar o mouse sobre o botão */
 .button:hover {
-    -fx-background-color: linear-gradient(to bottom, #45a049, #398e3d); /* Verde mais escuro no hover */
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 3);
+    -fx-background-color: linear-gradient(to bottom, #7d8b9a, #697684);
 }
 
-/* Estilo para TextFields e ComboBoxes */
-.text-field, .combo-box, .date-picker { /* Adicionado date-picker */
+/* --- VARIAÇÕES DE COR DOS BOTÕES --- */
+.button-green {
+    -fx-background-color: linear-gradient(to bottom, #6abf8c, #4a9c8c);
+}
+.button-green:hover {
+    -fx-background-color: linear-gradient(to bottom, #7bcfa4, #5ab8a4);
+}
+.button-red {
+    -fx-background-color: linear-gradient(to bottom, #F44336, #d32f2f);
+}
+.button-red:hover {
+    -fx-background-color: linear-gradient(to bottom, #f55a4e, #e53935);
+}
+/* ------------------------------------- */
+
+.text-field, .combo-box, .date-picker {
     -fx-background-color: white;
-    -fx-border-color: #b0c4de; /* Azul claro para borda */
+    -fx-border-color: #cccccc; /* Borda mais suave */
     -fx-border-width: 1px;
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-padding: 6px; /* Mais padding */
-    -fx-effect: innershadow(gaussian, rgba(0, 0, 0, 0.05), 2, 0, 0, 0); /* Sombra interna sutil */
+    -fx-border-radius: 6px; /* Mais arredondado */
+    -fx-background-radius: 6px;
+    -fx-padding: 8px; /* Um pouco mais de padding */
+    -fx-prompt-text-fill: #aaaaaa;
 }
 
-/* Estilo para campos de texto com erro de validação */
 .text-field-error {
-    -fx-border-color: #F44336; /* Vermelho vibrante */
+    -fx-border-color: #F44336;
     -fx-border-width: 2px;
-    -fx-effect: dropshadow(gaussian, rgba(244, 67, 54, 0.7), 8, 0, 0, 0); /* Sombra vermelha mais forte */
 }
-
-/* Estilo para labels de mensagem de erro */
 .error-message-label {
-    -fx-text-fill: #F44336; /* Vermelho vibrante */
+    -fx-text-fill: #F44336;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-opacity: 1.0; /* Totalmente opaco */
 }
 
+/* --- 3. ESTILOS DE TABELA --- */
 
-/* Estilo para TableView */
 .table-view {
-    -fx-background-color: #f0f0f0; /* Fundo cinza claro */
-    -fx-border-color: #cccccc;
+    -fx-background-color: transparent; /* Tira o fundo cinza */
+    -fx-border-color: #e0e0e0;
     -fx-border-width: 1px;
-    -fx-background-radius: 8px; /* Cantos mais arredondados */
+    -fx-background-radius: 8px;
     -fx-border-radius: 8px;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 0); /* Sombra mais pronunciada */
 }
-
-/* Cabeçalho da TableView */
+/* Cabeçalho da tabela mais limpo */
 .table-view .column-header-background {
-    -fx-background-color: linear-gradient(to bottom, #e0e0e0, #cccccc); /* Gradiente no cabeçalho */
-    -fx-background-radius: 8px 8px 0 0; /* Arredonda só os cantos superiores */
+    -fx-background-color: #f8f8f8;
+    -fx-background-radius: 8px 8px 0 0;
 }
-
 .table-view .column-header .label {
     -fx-font-weight: bold;
-    -fx-text-fill: #444444;
+    -fx-text-fill: #555555; /* Texto mais escuro */
 }
-
-/* Linhas da TableView */
+/* Linhas da tabela */
 .table-row-cell {
     -fx-background-color: white;
-    -fx-cell-size: 32px; /* Altura da linha um pouco maior */
-    -fx-background-insets: 0, 0 0 1 0; /* Separador de linha */
-    -fx-border-color: #eeeeee; /* Borda sutil entre as linhas */
+    -fx-cell-size: 35px;
+    -fx-border-color: #eeeeee;
     -fx-border-width: 0 0 1px 0;
 }
-
+.table-row-cell:odd {
+    -fx-background-color: #f9f9f9; /* Linha alternada suave */
+}
 .table-row-cell:selected {
-    -fx-background-color: #cceeff; /* Azul muito claro para linha selecionada */
+    -fx-background-color: #cceeff;
 }
 
-/* Estilo específico para Labels de Balanço */
-.balance-label-positive {
-    -fx-text-fill: #28a745; /* Verde para positivo */
+
+/* --- 4. ESTILOS ESPECÍFICOS DO MENU PRINCIPAL --- */
+
+.menu-button-grid {
+    -fx-hgap: 25px;
+    -fx-vgap: 20px;
+    -fx-alignment: CENTER;
 }
 
-.balance-label-negative {
-    -fx-text-fill: #dc3545; /* Vermelho para negativo */
-}
-
-.income-label {
-    -fx-text-fill: #007bff; /* Azul primario para receitas */
-}
-
-.expenses-label {
-    -fx-text-fill: #dc3545; /* Vermelho para despesas */
-}
-
-/* Estilo para o título do PieChart */
-.chart-title {
-    -fx-text-fill: #333333;
-    -fx-font-size: 16px;
+.menu-button {
+    -fx-pref-width: 280px;
+    -fx-pref-height: 60px;
+    -fx-background-radius: 30px;
+    -fx-border-radius: 30px;
+    -fx-font-size: 14px;
     -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 25px;
+    -fx-graphic-text-gap: 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0, 0, 2);
 }
-/* Estilo para as legendas do PieChart */
-.chart-legend {
-    -fx-background-color: rgba(255, 255, 255, 0.8);
-    -fx-padding: 5px;
-    -fx-border-radius: 5px;
-    -fx-background-radius: 5px;
+.menu-button:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 12, 0, 0, 3);
 }
-/* Estilo para as fatias do PieChart (cores podem ser sobrescritas programaticamente) */
-.chart-pie {
-    -fx-border-color: white;
-    -fx-border-width: 1px;
+.menu-button-green {
+    -fx-background-color: linear-gradient(to right, #6abf8c, #4a9c8c);
+}
+.menu-button-green:hover {
+    -fx-background-color: linear-gradient(to right, #7bcfa4, #5ab8a4);
+}
+.menu-button-blue {
+    -fx-background-color: linear-gradient(to right, #6c7a89, #586572);
+}
+.menu-button-blue:hover {
+    -fx-background-color: linear-gradient(to right, #7d8b9a, #697684);
 }
 
-.full-screen-hinter { /* Este e um styleClass que vamos aplicar manualmente */
-    -fx-font-size: 10px; /* Fonte menor */
-    -fx-text-fill: rgba(0, 0, 0, 0.5); /* Cor cinza com 50% de opacidade */
-    -fx-background-color: rgba(255, 255, 255, 0.2); /* Fundo sutil e transparente */
-    -fx-padding: 2px 5px; /* Menor padding */
-    -fx-border-radius: 3px;
-    -fx-background-radius: 3px;
+/* --- 5. ÍCONES (MENU + FORMULÁRIOS) --- */
+
+.menu-icon, .form-icon {
+    -fx-pref-width: 18px;
+    -fx-pref-height: 18px;
+    -fx-background-color: white;
 }
 
+/* Ícones do Menu */
+.icon-tag   { -fx-shape: "M17.63 5.84C17.27 5.48 16.8 5.2 16.2 5.2H10.8C10.2 5.2 9.73 5.48 9.37 5.84L2.37 12.84C1.6 13.6 1.6 14.84 2.37 15.6L8.4 21.63C8.77 22 9.24 22.2 9.77 22.2C10.3 22.2 10.77 22 11.14 21.63L18.14 14.63C18.9 13.87 18.9 12.63 18.14 11.87L17.63 5.84ZM12 11.2C11.45 11.2 11 10.75 11 10.2C11 9.65 11.45 9.2 12 9.2C12.55 9.2 13 9.65 13 10.2C13 10.75 12.55 11.2 12 11.2Z"; }
+.icon-coins { -fx-shape: "M16 4H8C5.79 4 4 5.79 4 8v8c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V8c0 2.21-1.79-4-4-4zm0 10H8c-1.1 0-2-.9-2-2V8c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v4c0 1.1-.9 2-2 2zm-4-4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"; }
+.icon-recycle{ -fx-shape: "M12 4c-4.42 0-8 3.58-8 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm-1.2 12.5V18c0 .55-.45 1-1 1s-1-.45-1-1v-1.5c-1.95-.4-3.5-2.01-3.5-4 0-2.21 1.79-4 4-4 .34 0 .67.04 1 .12V6.5c0-.55.45-1 1-1s1 .45 1 1V8c1.95.4 3.5 2.01 3.5 4 0 2.21-1.79 4-4 4-.34 0-.67-.04-1-.12z"; }
+.icon-piggy { -fx-shape: "M20 12c0-2.21-1.79-4-4-4h-4V6c0-1.1-.9-2-2-2s-2 .9-2 2v2H4c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h2v-2c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v2h2c1.1 0 2-.9 2-2v-8zM8 18H4v-4h4v4zm10-4c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"; }
+.icon-graph { -fx-shape: "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"; }
+.icon-exit  { -fx-shape: "M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"; }
+
+/* Ícones dos Formulários */
+.icon-add    { -fx-shape: "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"; }
+.icon-update { -fx-shape: "M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"; }
+.icon-delete { -fx-shape: "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"; }
+.icon-clear  { -fx-shape: "M15.5 4l-1 1 4 4 1-1c.39-.39.39-1.02 0-1.41l-2.59-2.59c-.39-.39-1.02-.39-1.41 0zM3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM5.92 19H5v-.92l9.06-9.06.92.92L5.92 19z"; }
+.icon-home   { -fx-shape: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"; }
+
+
+/* Hint de tela cheia */
 .full-screen-hint-label {
     -fx-font-size: 12px;
     -fx-text-fill: darkgray;
     -fx-padding: 5px 10px;
-    -fx-background-color: rgba(255, 255, 255, 0.3); /* Fundo sutil */
+    -fx-background-color: rgba(255, 255, 255, 0.3);
     -fx-background-radius: 5px;
     -fx-border-radius: 5px;
-}
-
-.custom-full-screen-hint-label {
-    -fx-font-size: 11px; /* Fonte menor */
-    -fx-text-fill: #555555; /* Um cinza discreto */
-    -fx-background-color: rgba(255, 255, 255, 0.4); /* Fundo branco semitransparente */
-    -fx-padding: 3px 8px; /* Padding menor */
-    -fx-border-radius: 4px;
-    -fx-background-radius: 4px;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 3, 0, 0, 0); /* Sombra bem sutil */
-    -fx-alignment: CENTER; /* Centraliza texto */
 }

@@ -3,8 +3,8 @@ package com.controle.view;
 import com.controle.model.Categoria;
 import com.controle.model.TipoCategoria;
 import com.controle.model.Transacao;
-import com.controle.service.GastoPessoalService;
 import com.controle.model.Orcamento;
+import com.controle.service.GastoPessoalService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -26,6 +26,8 @@ import java.util.Optional;
 public class TransactionController extends BaseController {
 
     private int selectedTransactionId = 0;
+
+    @FXML private Label fullScreenHintLabel;
 
     @FXML private TextField descriptionField;
     @FXML private TextField valueField;
@@ -50,6 +52,7 @@ public class TransactionController extends BaseController {
     @FXML private Label dateErrorLabel;
     @FXML private Label typeErrorLabel;
     @FXML private Label categoryErrorLabel;
+
     @FXML private TextField searchField;
 
 
@@ -103,6 +106,7 @@ public class TransactionController extends BaseController {
         });
 
         transactionTable.setItems(transactionsData);
+        transactionTable.setPlaceholder(new Label("Nenhuma transação encontrada"));
 
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             loadTransactions(newValue);
@@ -244,7 +248,7 @@ public class TransactionController extends BaseController {
 
                     Optional<ButtonType> result = confirmAlert.showAndWait();
                     if (result.isEmpty() || result.get() != ButtonType.OK) {
-                        return; // Usuário clicou em "Cancelar"
+                        return;
                     }
                 }
             }
@@ -317,8 +321,13 @@ public class TransactionController extends BaseController {
     }
 
     private void loadTransactions(String searchTerm) {
-        transactionsData.clear();
-        transactionsData.addAll(service.listarTransacoesPorTermo(searchTerm));
+        try {
+            transactionsData.clear();
+            transactionsData.addAll(service.listarTransacoesPorTermo(searchTerm));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Erro ao carregar transações", e.getMessage()));
+        }
     }
 
     @FXML
@@ -335,7 +344,9 @@ public class TransactionController extends BaseController {
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
             primaryStage.show();
-            Platform.runLater(() -> primaryStage.setMaximized(true));
+            applyFullScreen();
+            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
             System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
             e.printStackTrace();

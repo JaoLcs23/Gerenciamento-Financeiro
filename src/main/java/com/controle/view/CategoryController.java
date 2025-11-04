@@ -3,7 +3,6 @@ package com.controle.view;
 import com.controle.model.Categoria;
 import com.controle.model.TipoCategoria;
 import com.controle.service.GastoPessoalService;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -15,13 +14,11 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import javafx.application.Platform;
-
 import java.io.IOException;
 import java.util.Optional;
 
-public class CategoryController extends BaseController { // EXTENDE BASECONTROLLER
+public class CategoryController extends BaseController {
 
-    // AQUI: selectedCategoryId fica em CategoryController
     private int selectedCategoryId = 0;
 
     @FXML private TextField categoryNameField;
@@ -30,20 +27,16 @@ public class CategoryController extends BaseController { // EXTENDE BASECONTROLL
     @FXML private TableColumn<Categoria, Integer> colId;
     @FXML private TableColumn<Categoria, String> colName;
     @FXML private TableColumn<Categoria, TipoCategoria> colType;
-
     @FXML private Button addCategoryButton;
     @FXML private Button updateCategoryButton;
     @FXML private Button deleteCategoryButton;
     @FXML private Button newCategoryButton;
-
     @FXML private Label categoryNameErrorLabel;
     @FXML private Label categoryTypeErrorLabel;
+    @FXML private Label fullScreenHintLabel;
 
-    @FXML private TextField searchField;
-
-
-    private GastoPessoalService service;
-    private ObservableList<Categoria> categoriasData = FXCollections.observableArrayList();
+    private final GastoPessoalService service;
+    private final ObservableList<Categoria> categoriasData = FXCollections.observableArrayList();
 
     public CategoryController() {
         this.service = new GastoPessoalService();
@@ -51,6 +44,7 @@ public class CategoryController extends BaseController { // EXTENDE BASECONTROLL
 
     @FXML
     public void initialize() {
+
         categoryTypeComboBox.getItems().setAll(TipoCategoria.values());
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -58,17 +52,15 @@ public class CategoryController extends BaseController { // EXTENDE BASECONTROLL
         colType.setCellValueFactory(new PropertyValueFactory<>("tipo"));
 
         categoryTable.setItems(categoriasData);
+        categoryTable.setPlaceholder(new Label("Nenhuma categoria encontrada"));
 
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            loadCategories(newValue);
-        });
+        categoryTable.getSelectionModel().selectedItemProperty().addListener(
+                (obs, oldV, newV) -> showCategoryDetails(newV)
+        );
 
         loadCategories("");
         setFormMode(false);
-        clearAllErrors(); // CHAMA clearAllErrors() implementado aqui
-
-        categoryTable.getSelectionModel().selectedItemProperty().addListener(
-                (observable, oldValue, newValue) -> showCategoryDetails(newValue));
+        clearAllErrors();
     }
 
     private void showCategoryDetails(Categoria categoria) {
@@ -98,7 +90,6 @@ public class CategoryController extends BaseController { // EXTENDE BASECONTROLL
         categoryTable.getSelectionModel().clearSelection();
         setFormMode(false);
         clearAllErrors();
-        searchField.clear();
         loadCategories("");
     }
 
@@ -133,13 +124,13 @@ public class CategoryController extends BaseController { // EXTENDE BASECONTROLL
                 service.atualizarCategoria(categoriaAtualizada);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Categoria '" + name + "' atualizada com sucesso!");
             }
-            loadCategories(searchField.getText());
+            loadCategories("");
             handleNewCategory(null);
         } catch (IllegalArgumentException e) {
             showAlert(Alert.AlertType.ERROR, "Erro", e.getMessage());
         } catch (RuntimeException e) {
-            showAlert(Alert.AlertType.ERROR, "Erro Inesperado", "Ocorreu um erro inesperado: " + e.getMessage());
             e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro Inesperado", "Ocorreu um erro inesperado: " + e.getMessage());
         }
     }
 
@@ -160,19 +151,28 @@ public class CategoryController extends BaseController { // EXTENDE BASECONTROLL
             try {
                 service.excluirCategoria(selectedCategoryId);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Categoria excluída com sucesso!");
-                loadCategories(searchField.getText());
+                loadCategories("");
                 handleNewCategory(null);
-            }
-            catch (RuntimeException e) {
-                showAlert(Alert.AlertType.ERROR, "Erro ao Excluir", "Ocorreu um erro ao excluir a categoria: " + e.getMessage());
+            } catch (RuntimeException e) {
                 e.printStackTrace();
+                String msg = e.getMessage() == null ? "" : e.getMessage();
+                if (msg.contains("REFERENCE constraint") || msg.contains("referential integrity constraint violation")) {
+                    showAlert(Alert.AlertType.ERROR, "Erro ao Excluir", "Não é possível excluir esta categoria pois ela já está em uso por transações ou orçamentos.");
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Erro ao Excluir", "Ocorreu um erro ao excluir a categoria: " + msg);
+                }
             }
         }
     }
 
     private void loadCategories(String searchTerm) {
-        categoriasData.clear();
-        categoriasData.addAll(service.listarCategoriasPorTermo(searchTerm));
+        try {
+            categoriasData.clear();
+            categoriasData.addAll(service.listarCategoriasPorTermo(searchTerm));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Erro ao carregar categorias", e.getMessage()));
+        }
     }
 
     @FXML
@@ -182,24 +182,28 @@ public class CategoryController extends BaseController { // EXTENDE BASECONTROLL
             Parent root = loader.load();
 
             MenuController menuController = loader.getController();
-            menuController.setPrimaryStage(primaryStage);
+            if (menuController != null) {
+                menuController.setPrimaryStage(primaryStage);
+            }
 
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
+            if (getClass().getResource("/com/controle/view/style.css") != null) {
+                scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
+            }
 
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
             primaryStage.show();
-            applyFullScreen(); // CHAMA applyFullScreen da BaseController
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000); // CHAMA showFullScreenHintTemporarily da BaseController
+
+            applyFullScreen();
+            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
-            System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar o menu principal.");
         }
     }
 
-    // AQUI: Implementacao do metodo abstrato clearAllErrors da BaseController
     @Override
     protected void clearAllErrors() {
         clearFieldError(categoryNameField, categoryNameErrorLabel);

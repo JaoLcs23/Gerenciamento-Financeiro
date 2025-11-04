@@ -2,8 +2,7 @@ package com.controle.app;
 
 import com.controle.view.MenuController;
 import com.controle.service.GastoPessoalService;
-import com.controle.util.DatabaseConnection; // Import necessário
-
+import com.controle.util.DatabaseConnection;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

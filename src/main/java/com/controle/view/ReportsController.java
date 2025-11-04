@@ -13,51 +13,33 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import javafx.scene.Node;
 import javafx.scene.chart.PieChart;
+import javafx.application.Platform;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Map;
 
-//Controlador da tela de relatórios financeiros
-public class ReportsController {
+public class ReportsController extends BaseController {
 
-    private Stage primaryStage;
-
-    public void setPrimaryStage(Stage primaryStage) {
-        this.primaryStage = primaryStage;
-    }
-
+    @FXML private Label fullScreenHintLabel;
     @FXML private Label totalBalanceLabel;
     @FXML private Label totalIncomeLabel;
     @FXML private Label totalExpensesLabel;
-
-    @FXML private DatePicker balanceStartDatePicker;
-    @FXML private DatePicker balanceEndDatePicker;
-
-    @FXML private Label balanceStartDateErrorLabel;
-    @FXML private Label balanceEndDatePickerErrorLabel;
-
     @FXML private DatePicker startDatePicker;
     @FXML private DatePicker endDatePicker;
-
     @FXML private Label startDateErrorLabel;
     @FXML private Label endDateErrorLabel;
-
-
     @FXML private TableView<CategorySummary> categoryExpensesTable;
     @FXML private TableColumn<CategorySummary, String> colCategoryName;
     @FXML private TableColumn<CategorySummary, Double> colCategoryAmount;
-
-    // Componente PieChart
     @FXML private PieChart categoryPieChart;
-
 
     private GastoPessoalService service;
     private ObservableList<CategorySummary> categorySummaryData = FXCollections.observableArrayList();
 
     public ReportsController() {
-        this.service = new GastoPessoalService(); //
+        this.service = new GastoPessoalService();
     }
 
     @FXML
@@ -78,39 +60,32 @@ public class ReportsController {
         });
 
         categoryExpensesTable.setItems(categorySummaryData);
+        categoryExpensesTable.setPlaceholder(new Label("Nenhum dado para o período"));
 
-        // Define as datas padrão para o balanço e categorias (ex: mês atual)
         LocalDate firstDayOfCurrentMonth = LocalDate.now().withDayOfMonth(1);
         LocalDate today = LocalDate.now();
-
-        balanceStartDatePicker.setValue(firstDayOfCurrentMonth);
-        balanceEndDatePicker.setValue(today);
         startDatePicker.setValue(firstDayOfCurrentMonth);
         endDatePicker.setValue(today);
 
         clearAllErrors();
 
-        // --- INÍCIO DA CORREÇÃO ---
-        // Garante que a tabela de transações está atualizada ANTES de gerar o relatório
-        System.out.println("ReportsController: Verificando transações recorrentes pendentes...");
-        service.processarTransacoesRecorrentes(); //
-        // --- FIM DA CORREÇÃO ---
-
-        handleGenerateBalanceReport(null);
-        handleGenerateCategoryReport(null);
+        Platform.runLater(() -> {
+            System.out.println("ReportsController: Verificando transações recorrentes pendentes...");
+            service.processarTransacoesRecorrentes();
+            handleGenerateReport(null);
+        });
     }
 
+    // Atualiza os labels do balanço (Receita, Despesa, Saldo)
     private void updateTotalBalance() {
-        LocalDate startDate = balanceStartDatePicker.getValue();
-        LocalDate endDate = balanceEndDatePicker.getValue();
+        LocalDate startDate = startDatePicker.getValue();
+        LocalDate endDate = endDatePicker.getValue();
 
-        // Garante que o balanço seja atualizado com as datas corretas, mesmo que a validacao ocorra
         if (startDate == null || endDate == null || startDate.isAfter(endDate)) {
-            // Se as datas são inválidas, apenas mostra valores padrão ou 0
             totalBalanceLabel.setText("Balanço: R$ 0.00");
             totalIncomeLabel.setText("Receitas: R$ 0.00");
             totalExpensesLabel.setText("Despesas: R$ 0.00");
-            totalBalanceLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: gray;");
+            totalBalanceLabel.getStyleClass().removeAll("balance-label-positive", "balance-label-negative");
             return;
         }
 
@@ -120,10 +95,11 @@ public class ReportsController {
             double totalExpenses = service.calcularTotalDespesas(startDate, endDate);
 
             totalBalanceLabel.setText(String.format("Balanço: R$ %.2f", totalBalance));
+            totalBalanceLabel.getStyleClass().removeAll("balance-label-positive", "balance-label-negative");
             if (totalBalance >= 0) {
-                totalBalanceLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: green;");
+                totalBalanceLabel.getStyleClass().add("balance-label-positive");
             } else {
-                totalBalanceLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: red;");
+                totalBalanceLabel.getStyleClass().add("balance-label-negative");
             }
 
             totalIncomeLabel.setText(String.format("Receitas: R$ %.2f", totalIncome));
@@ -136,91 +112,60 @@ public class ReportsController {
     }
 
     @FXML
-    private void handleGenerateBalanceReport(ActionEvent event) {
-        clearFieldError(balanceStartDatePicker, balanceStartDateErrorLabel);
-        clearFieldError(balanceEndDatePicker, balanceEndDatePickerErrorLabel);
-
-        LocalDate startDate = balanceStartDatePicker.getValue();
-        LocalDate endDate = balanceEndDatePicker.getValue();
-
-        boolean isValid = true;
-        if (startDate == null) {
-            showFieldError(balanceStartDatePicker, balanceStartDateErrorLabel, "Data de início obrigatória.");
-            isValid = false;
-        }
-        if (endDate == null) {
-            showFieldError(balanceEndDatePicker, balanceEndDatePickerErrorLabel, "Data de fim obrigatória.");
-            isValid = false;
-        } else if (startDate != null && startDate.isAfter(endDate)) {
-            showFieldError(balanceStartDatePicker, balanceStartDateErrorLabel, "Início não pode ser após o fim.");
-            isValid = false;
-        }
-
-        if (!isValid) {
-            showAlert(Alert.AlertType.WARNING, "Datas Inválidas", "Por favor, corrija as datas do balanço.");
+    private void handleGenerateReport(ActionEvent event) {
+        // Valida os seletores de data
+        if (!validateDatePickers(startDatePicker, endDatePicker, startDateErrorLabel, endDateErrorLabel)) {
+            showAlert(Alert.AlertType.WARNING, "Datas Inválidas", "Por favor, corrija as datas do relatório.");
             return;
         }
 
-        updateTotalBalance(); // Atualiza o balanço com as datas validadas
-    }
+        // Atualiza o Balanço
+        updateTotalBalance();
 
-    //Gera o relatório de despesas por categoria com base nas datas selecionadas
-    @FXML
-    private void handleGenerateCategoryReport(ActionEvent event) {
-        clearFieldError(startDatePicker, startDateErrorLabel);
-        clearFieldError(endDatePicker, endDateErrorLabel);
-
+        // Atualiza a Tabela e o Gráfico de Categorias
         LocalDate startDate = startDatePicker.getValue();
         LocalDate endDate = endDatePicker.getValue();
 
-        System.out.println("Relatório de Categorias: Data Início = " + startDate + ", Data Fim = " + endDate);
-
-        boolean isValid = true;
-        if (startDate == null) {
-            showFieldError(startDatePicker, startDateErrorLabel, "Data de início obrigatória.");
-            isValid = false;
-        }
-        if (endDate == null) {
-            showFieldError(endDatePicker, endDateErrorLabel, "Data de fim obrigatória.");
-            isValid = false;
-        } else if (startDate != null && startDate.isAfter(endDate)) {
-            showFieldError(startDatePicker, startDateErrorLabel, "Início não pode ser após o fim.");
-            isValid = false;
-        }
-
-        if (!isValid) {
-            showAlert(Alert.AlertType.WARNING, "Datas Inválidas", "Por favor, corrija as datas do relatório de categorias.");
-            return;
-        }
-
         try {
             Map<String, Double> expensesMap = service.calcularDespesasPorCategoria(startDate, endDate);
-
-            System.out.println("Relatório de Categorias: Mapa de despesas recebido (tamanho) = " + expensesMap.size());
-            expensesMap.forEach((k, v) -> System.out.println("  " + k + ": " + v));
-
             categorySummaryData.clear();
             expensesMap.forEach((name, amount) -> categorySummaryData.add(new CategorySummary(name, amount)));
-
-            categoryExpensesTable.refresh(); // Força o refresh da tabela
-
-            //Atualiza o gráfico de pizza
+            categoryExpensesTable.refresh();
             updateCategoryPieChart(expensesMap);
 
-            System.out.println("Relatório de Categorias: categorySummaryData populado (tamanho) = " + categorySummaryData.size());
-
         } catch (RuntimeException e) {
-            showAlert(Alert.AlertType.ERROR, "Erro ao Gerar Relatório", "Ocorreu um erro ao gerar o relatório: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Erro ao Gerar Relatório", "Ocorreu um erro ao gerar o relatório de categorias: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    //Atualiza o gráfico de pizza com os dados de despesas por categoria
+    private boolean validateDatePickers(DatePicker start, DatePicker end, Label startError, Label endError) {
+        clearFieldError(start, startError);
+        clearFieldError(end, endError);
+
+        LocalDate startDate = start.getValue();
+        LocalDate endDate = end.getValue();
+        boolean isValid = true;
+
+        if (startDate == null) {
+            showFieldError(start, startError, "Data de início obrigatória.");
+            isValid = false;
+        }
+        if (endDate == null) {
+            showFieldError(end, endError, "Data de fim obrigatória.");
+            isValid = false;
+        } else if (startDate != null && startDate.isAfter(endDate)) {
+            showFieldError(start, startError, "Início não pode ser após o fim.");
+            isValid = false;
+        }
+        return isValid;
+    }
+
     private void updateCategoryPieChart(Map<String, Double> expensesMap) {
         ObservableList<PieChart.Data> pieChartData = FXCollections.observableArrayList();
 
         if (expensesMap.isEmpty()) {
-            categoryPieChart.setData(FXCollections.emptyObservableList()); // Limpa o gráfico se nao houver dados
+            categoryPieChart.setData(FXCollections.emptyObservableList());
             categoryPieChart.setTitle("Distribuição de Despesas (Nenhum dado)");
             return;
         }
@@ -228,13 +173,12 @@ public class ReportsController {
         double totalExpenses = expensesMap.values().stream().mapToDouble(Double::doubleValue).sum();
 
         expensesMap.forEach((categoryName, amount) -> {
-            // Calcula a porcentagem para exibir no nome da fatia
             String label = String.format("%s (%.2f%%)", categoryName, (amount / totalExpenses * 100));
             pieChartData.add(new PieChart.Data(label, amount));
         });
 
         categoryPieChart.setData(pieChartData);
-        categoryPieChart.setTitle("Distribuição de Despesas por Categoria"); // Redefine o titulo
+        categoryPieChart.setTitle("Distribuição de Despesas por Categoria");
     }
 
     @FXML
@@ -247,12 +191,15 @@ public class ReportsController {
             menuController.setPrimaryStage(primaryStage);
 
             Scene scene = new Scene(root);
-            // Carregando o CSS na nova Scene
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm()); //
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
 
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
             primaryStage.show();
+
+            applyFullScreen();
+            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
             System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
             e.printStackTrace();
@@ -260,38 +207,13 @@ public class ReportsController {
         }
     }
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    // --- Métodos Auxiliares para Feedback de Validação ---
-
-    private void showFieldError(Control control, Label errorLabel, String message) {
-        if (!control.getStyleClass().contains("text-field-error")) {
-            control.getStyleClass().add("text-field-error");
-        }
-        errorLabel.setText(message);
-        errorLabel.setVisible(true);
-    }
-
-    private void clearFieldError(Control control, Label errorLabel) {
-        control.getStyleClass().remove("text-field-error");
-        errorLabel.setText("");
-        errorLabel.setVisible(false);
-    }
-
-    private void clearAllErrors() {
-        clearFieldError(balanceStartDatePicker, balanceStartDateErrorLabel);
-        clearFieldError(balanceEndDatePicker, balanceEndDatePickerErrorLabel);
+    @Override
+    protected void clearAllErrors() {
+        // Modificado para limpar apenas os seletores de data restantes
         clearFieldError(startDatePicker, startDateErrorLabel);
         clearFieldError(endDatePicker, endDateErrorLabel);
     }
 
-    // Classe auxiliar para o TableView de resumo de categorias
     public static class CategorySummary {
         private final String categoryName;
         private final Double totalAmount;
@@ -300,21 +222,7 @@ public class ReportsController {
             this.categoryName = categoryName;
             this.totalAmount = totalAmount;
         }
-
-        public String getCategoryName() {
-            return categoryName;
-        }
-
-        public Double getTotalAmount() {
-            return totalAmount;
-        }
-
-        @Override
-        public String toString() {
-            return "CategorySummary{" +
-                    "categoryName='" + categoryName + '\'' +
-                    ", totalAmount=" + totalAmount +
-                    '}';
-        }
+        public String getCategoryName() { return categoryName; }
+        public Double getTotalAmount() { return totalAmount; }
     }
 }

@@ -10,8 +10,11 @@ import javafx.stage.Stage;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
+import com.controle.view.CategoryController;
+import com.controle.view.TransactionController;
 import com.controle.view.RecurringTransactionController;
 import com.controle.view.BudgetController;
+import com.controle.view.ReportsController;
 
 import java.io.IOException;
 
@@ -32,8 +35,10 @@ public class MenuController extends BaseController {
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Categorias");
             primaryStage.show();
+
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
             System.err.println("Erro ao carregar a tela de categorias: " + e.getMessage());
             e.printStackTrace();
@@ -56,8 +61,10 @@ public class MenuController extends BaseController {
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Transações");
             primaryStage.show();
+
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
             System.err.println("Erro ao carregar a tela de transações: " + e.getMessage());
             e.printStackTrace();
@@ -80,8 +87,10 @@ public class MenuController extends BaseController {
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Transações Recorrentes");
             primaryStage.show();
+
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
             System.err.println("Erro ao carregar a tela de transações recorrentes: " + e.getMessage());
             e.printStackTrace();
@@ -89,28 +98,25 @@ public class MenuController extends BaseController {
         }
     }
 
-    /**
-     * Manipula o clique no botão "Gerenciar Orçamentos".
-     * Carrega e exibe a tela BudgetView.
-     */
     @FXML
     private void handleManageBudgets(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/BudgetView.fxml"));
             Parent root = loader.load();
 
-            // Carrega o novo controller
             BudgetController budgetController = loader.getController();
             budgetController.setPrimaryStage(primaryStage);
 
             Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm()); //
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
 
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Orçamentos");
             primaryStage.show();
+
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
             System.err.println("Erro ao carregar a tela de orçamentos: " + e.getMessage());
             e.printStackTrace();
@@ -135,6 +141,7 @@ public class MenuController extends BaseController {
             primaryStage.show();
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
         } catch (IOException e) {
             System.err.println("Erro ao carregar a tela de relatórios: " + e.getMessage());
             e.printStackTrace();
@@ -150,6 +157,5 @@ public class MenuController extends BaseController {
 
     @Override
     protected void clearAllErrors() {
-        // Nada a limpar no menu principal
     }
 }

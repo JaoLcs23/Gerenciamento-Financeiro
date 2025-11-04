@@ -14,7 +14,7 @@ public abstract class BaseController {
 
     protected Stage primaryStage;
 
-    @FXML protected Label fullScreenHintLabel; // Label para a mensagem de full screen hint
+    @FXML protected Label fullScreenHintLabel;
 
     private static Timer hintTimer = null;
     private static AtomicInteger hintCounter = new AtomicInteger(0);
@@ -65,7 +65,6 @@ public abstract class BaseController {
         }
     }
 
-    // MÉTODOS AUXILIARES DE ALERTA E VALIDAÇÃO DE CAMPO (PROTECTED)
     protected void showAlert(Alert.AlertType type, String title, String message) {
         Platform.runLater(() -> {
             Alert alert = new Alert(type);
@@ -100,6 +99,5 @@ public abstract class BaseController {
         });
     }
 
-    // MÉTODO ABSTRATO: DEVE SER IMPLEMENTADO POR TODAS AS SUBCLASSES CONCRETAS
     protected abstract void clearAllErrors();
 }
