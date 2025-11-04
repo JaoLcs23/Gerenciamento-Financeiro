@@ -9,27 +9,27 @@ public class Transacao {
     private LocalDate data;
     private TipoCategoria tipo;
     private Categoria categoria;
+    private Conta conta;
 
-    // Construtor completo para transações existentes
-    public Transacao(int id, String descricao, double valor, LocalDate data, TipoCategoria tipo, Categoria categoria) {
+    public Transacao(int id, String descricao, double valor, LocalDate data, TipoCategoria tipo, Categoria categoria, Conta conta) {
         this.id = id;
         this.descricao = descricao;
         this.valor = valor;
         this.data = data;
         this.tipo = tipo;
         this.categoria = categoria;
+        this.conta = conta;
     }
 
-    // Construtor para novas transações
-    public Transacao(String descricao, double valor, LocalDate data, TipoCategoria tipo, Categoria categoria) {
+    public Transacao(String descricao, double valor, LocalDate data, TipoCategoria tipo, Categoria categoria, Conta conta) {
         this.descricao = descricao;
         this.valor = valor;
         this.data = data;
         this.tipo = tipo;
         this.categoria = categoria;
+        this.conta = conta;
     }
 
-    // Getters e Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getDescricao() { return descricao; }
@@ -42,6 +42,8 @@ public class Transacao {
     public void setTipo(TipoCategoria tipo) { this.tipo = tipo; }
     public Categoria getCategoria() { return categoria; }
     public void setCategoria(Categoria categoria) { this.categoria = categoria; }
+    public Conta getConta() { return conta; }
+    public void setConta(Conta conta) { this.conta = conta; }
 
     @Override
     public String toString() {
@@ -52,6 +54,7 @@ public class Transacao {
                 ", data=" + data +
                 ", tipo=" + tipo +
                 ", categoria=" + (categoria != null ? categoria.getNome() : "N/A") +
+                ", conta=" + (conta != null ? conta.getNome() : "N/A") + // <-- NOVO
                 '}';
     }
 }

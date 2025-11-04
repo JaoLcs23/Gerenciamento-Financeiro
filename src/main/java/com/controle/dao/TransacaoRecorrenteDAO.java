@@ -1,6 +1,7 @@
 package com.controle.dao;
 
 import com.controle.model.Categoria;
+import com.controle.model.Conta;
 import com.controle.model.TipoCategoria;
 import com.controle.model.TransacaoRecorrente;
 
@@ -16,36 +17,40 @@ import java.util.List;
 
 public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Integer> {
 
-    private CategoriaDAO categoriaDAO;
+    private final CategoriaDAO categoriaDAO;
+    private final ContaDAO contaDAO; // <-- NOVO
 
     public TransacaoRecorrenteDAO() {
         super();
         this.categoriaDAO = new CategoriaDAO();
+        this.contaDAO = new ContaDAO(); // <-- NOVO
     }
 
     @Override
     public void save(TransacaoRecorrente tr) {
-        String sql = "INSERT INTO transacoes_recorrentes (descricao, valor, tipo, categoria_id, dia_do_mes, data_inicio, data_fim, data_ultimo_processamento) " +
-                "OUTPUT INSERTED.id VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        // SQL ATUALIZADO
+        String sql = "INSERT INTO transacoes_recorrentes (descricao, valor, tipo, categoria_id, conta_id, dia_do_mes, data_inicio, data_fim, data_ultimo_processamento) " +
+                "OUTPUT INSERTED.id VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, tr.getDescricao());
             stmt.setDouble(2, tr.getValor());
             stmt.setString(3, tr.getTipo().name());
             stmt.setInt(4, tr.getCategoria().getId());
-            stmt.setInt(5, tr.getDiaDoMes());
-            stmt.setDate(6, Date.valueOf(tr.getDataInicio()));
+            stmt.setInt(5, tr.getConta().getId()); // <-- NOVO CAMPO
+            stmt.setInt(6, tr.getDiaDoMes());
+            stmt.setDate(7, Date.valueOf(tr.getDataInicio()));
 
             if (tr.getDataFim() != null) {
-                stmt.setDate(7, Date.valueOf(tr.getDataFim()));
+                stmt.setDate(8, Date.valueOf(tr.getDataFim()));
             } else {
-                stmt.setNull(7, Types.DATE);
+                stmt.setNull(8, Types.DATE);
             }
 
             if (tr.getDataUltimoProcessamento() != null) {
-                stmt.setDate(8, Date.valueOf(tr.getDataUltimoProcessamento()));
+                stmt.setDate(9, Date.valueOf(tr.getDataUltimoProcessamento()));
             } else {
-                stmt.setNull(8, Types.DATE);
+                stmt.setNull(9, Types.DATE);
             }
 
             try (ResultSet rs = stmt.executeQuery()) {
@@ -53,7 +58,6 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
                     tr.setId(rs.getInt(1));
                 }
             }
-            System.out.println("Transação recorrente '" + tr.getDescricao() + "' salva com sucesso. ID: " + tr.getId());
         } catch (SQLException e) {
             System.err.println("Erro ao salvar transação recorrente: " + e.getMessage());
             throw new RuntimeException("Erro ao salvar transação recorrente.", e);
@@ -95,7 +99,8 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
 
     @Override
     public void update(TransacaoRecorrente tr) {
-        String sql = "UPDATE transacoes_recorrentes SET descricao = ?, valor = ?, tipo = ?, categoria_id = ?, " +
+        // SQL ATUALIZADO
+        String sql = "UPDATE transacoes_recorrentes SET descricao = ?, valor = ?, tipo = ?, categoria_id = ?, conta_id = ?, " +
                 "dia_do_mes = ?, data_inicio = ?, data_fim = ?, data_ultimo_processamento = ? " +
                 "WHERE id = ?";
 
@@ -104,27 +109,25 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
             stmt.setDouble(2, tr.getValor());
             stmt.setString(3, tr.getTipo().name());
             stmt.setInt(4, tr.getCategoria().getId());
-            stmt.setInt(5, tr.getDiaDoMes());
-            stmt.setDate(6, Date.valueOf(tr.getDataInicio()));
+            stmt.setInt(5, tr.getConta().getId()); // <-- NOVO CAMPO
+            stmt.setInt(6, tr.getDiaDoMes());
+            stmt.setDate(7, Date.valueOf(tr.getDataInicio()));
 
             if (tr.getDataFim() != null) {
-                stmt.setDate(7, Date.valueOf(tr.getDataFim()));
-            } else {
-                stmt.setNull(7, Types.DATE);
-            }
-
-            if (tr.getDataUltimoProcessamento() != null) {
-                stmt.setDate(8, Date.valueOf(tr.getDataUltimoProcessamento()));
+                stmt.setDate(8, Date.valueOf(tr.getDataFim()));
             } else {
                 stmt.setNull(8, Types.DATE);
             }
 
-            stmt.setInt(9, tr.getId());
-
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Transação recorrente '" + tr.getDescricao() + "' atualizada com sucesso.");
+            if (tr.getDataUltimoProcessamento() != null) {
+                stmt.setDate(9, Date.valueOf(tr.getDataUltimoProcessamento()));
+            } else {
+                stmt.setNull(9, Types.DATE);
             }
+
+            stmt.setInt(10, tr.getId()); // ID é o 10º parâmetro
+
+            stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Erro ao atualizar transação recorrente: " + e.getMessage());
             throw new RuntimeException("Erro ao atualizar transação recorrente.", e);
@@ -136,10 +139,7 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         String sql = "DELETE FROM transacoes_recorrentes WHERE id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, id);
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Transação recorrente com ID " + id + " excluída com sucesso.");
-            }
+            stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Erro ao excluir transação recorrente: " + e.getMessage());
             throw new RuntimeException("Erro ao excluir transação recorrente.", e);
@@ -167,10 +167,6 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         return lista;
     }
 
-    /**
-     * NOVO MÉTODO DE BUSCA
-     * Busca transacoes recorrentes cujas descrições contêm o termo de busca.
-     */
     public List<TransacaoRecorrente> findAllByDescriptionLike(String termoBusca) {
         List<TransacaoRecorrente> lista = new ArrayList<>();
         String sql = "SELECT * FROM transacoes_recorrentes WHERE descricao LIKE ?";
@@ -190,6 +186,7 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
     }
 
     private TransacaoRecorrente mapResultSetToTransacaoRecorrente(ResultSet rs) throws SQLException {
+        // Usa o construtor vazio
         TransacaoRecorrente tr = new TransacaoRecorrente();
         tr.setId(rs.getInt("id"));
         tr.setDescricao(rs.getString("descricao"));
@@ -212,9 +209,15 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
             tr.setDataUltimoProcessamento(null);
         }
 
+        // Busca Categoria (não pode ser nula)
         int categoriaId = rs.getInt("categoria_id");
         Categoria cat = categoriaDAO.findById(categoriaId);
         tr.setCategoria(cat);
+
+        // Busca Conta (não pode ser nula)
+        int contaId = rs.getInt("conta_id");
+        Conta conta = contaDAO.findById(contaId);
+        tr.setConta(conta);
 
         return tr;
     }

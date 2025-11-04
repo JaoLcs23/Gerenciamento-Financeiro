@@ -21,7 +21,7 @@
     </top>
 
     <center>
-        <GridPane styleClass="menu-button-grid">
+        <GridPane styleClass="menu-button-grid" vgap="20">
             <columnConstraints>
                 <ColumnConstraints />
                 <ColumnConstraints />
@@ -32,29 +32,35 @@
                     <Region styleClass="menu-icon, icon-tag" />
                 </graphic>
             </Button>
-            <Button onAction="#handleManageTransactions" text="TRANSAÇÕES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="0">
+            <Button onAction="#handleManageAccounts" text="CONTAS" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="0">
                 <graphic>
                     <Region styleClass="menu-icon, icon-coins" />
                 </graphic>
             </Button>
 
-            <Button onAction="#handleManageRecurringTransactions" text="TRANSAÇÕES RECORRENTES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="0" GridPane.rowIndex="1">
+            <Button onAction="#handleManageTransactions" text="TRANSAÇÕES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                <graphic>
+                    <Region styleClass="menu-icon, icon-coins" />
+                </graphic>
+            </Button>
+            <Button onAction="#handleManageRecurringTransactions" text="TRANSAÇÕES RECORRENTES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="1">
                 <graphic>
                     <Region styleClass="menu-icon, icon-recycle" />
                 </graphic>
             </Button>
-            <Button onAction="#handleManageBudgets" text="ORÇAMENTOS" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="1">
+
+            <Button onAction="#handleManageBudgets" text="ORÇAMENTOS" styleClass="menu-button, menu-button-green" GridPane.columnIndex="0" GridPane.rowIndex="2">
                 <graphic>
                     <Region styleClass="menu-icon, icon-piggy" />
                 </graphic>
             </Button>
-
-            <Button onAction="#handleViewReports" text="RELATÓRIOS" styleClass="menu-button, menu-button-green" GridPane.columnIndex="0" GridPane.rowIndex="2">
+            <Button onAction="#handleViewReports" text="RELATÓRIOS" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="2">
                 <graphic>
                     <Region styleClass="menu-icon, icon-graph" />
                 </graphic>
             </Button>
-            <Button onAction="#handleExit" text="SAIR" styleClass="menu-button, menu-button-blue" GridPane.columnIndex="1" GridPane.rowIndex="2">
+
+            <Button onAction="#handleExit" text="SAIR" styleClass="menu-button, menu-button-blue" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" maxWidth="Infinity">
                 <graphic>
                     <Region styleClass="menu-icon, icon-exit" />
                 </graphic>

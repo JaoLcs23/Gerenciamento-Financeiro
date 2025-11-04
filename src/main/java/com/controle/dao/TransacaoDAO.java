@@ -1,6 +1,7 @@
 package com.controle.dao;
 
 import com.controle.model.Categoria;
+import com.controle.model.Conta;
 import com.controle.model.Transacao;
 import com.controle.model.TipoCategoria;
 import java.sql.Date;
@@ -14,32 +15,43 @@ import java.util.List;
 
 public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
 
-    private CategoriaDAO categoriaDAO;
+    private final CategoriaDAO categoriaDAO;
+    private final ContaDAO contaDAO; // <-- NOVO
 
     public TransacaoDAO() {
         super();
         this.categoriaDAO = new CategoriaDAO();
+        this.contaDAO = new ContaDAO(); // <-- NOVO
     }
 
     @Override
     public void save(Transacao transacao) {
-        String sql = "INSERT INTO transacoes (descricao, valor, data, tipo, categoria_id) OUTPUT INSERTED.id VALUES (?, ?, ?, ?, ?)";
+        // SQL ATUALIZADO
+        String sql = "INSERT INTO transacoes (descricao, valor, data, tipo, categoria_id, conta_id) OUTPUT INSERTED.id VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, transacao.getDescricao());
             stmt.setDouble(2, transacao.getValor());
             stmt.setDate(3, Date.valueOf(transacao.getData()));
             stmt.setString(4, transacao.getTipo().name());
+
             if (transacao.getCategoria() != null) {
                 stmt.setInt(5, transacao.getCategoria().getId());
             } else {
                 stmt.setNull(5, java.sql.Types.INTEGER);
             }
+
+            // NOVO CAMPO
+            if (transacao.getConta() != null) {
+                stmt.setInt(6, transacao.getConta().getId());
+            } else {
+                stmt.setNull(6, java.sql.Types.INTEGER);
+            }
+
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     transacao.setId(rs.getInt(1));
                 }
             }
-            System.out.println("Transação '" + transacao.getDescricao() + "' salva com sucesso. ID: " + transacao.getId());
         } catch (SQLException e) {
             System.err.println("Erro ao salvar transação: " + e.getMessage());
             throw new RuntimeException("Erro ao salvar transação.", e);
@@ -48,21 +60,13 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
 
     @Override
     public Transacao findById(Integer id) {
-        String sql = "SELECT id, descricao, valor, data, tipo, categoria_id FROM transacoes WHERE id = ?";
+        // SQL ATUALIZADO
+        String sql = "SELECT * FROM transacoes WHERE id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    String descricao = rs.getString("descricao");
-                    double valor = rs.getDouble("valor");
-                    LocalDate data = rs.getDate("data").toLocalDate();
-                    TipoCategoria tipo = TipoCategoria.valueOf(rs.getString("tipo"));
-                    Integer categoriaId = rs.getObject("categoria_id", Integer.class);
-                    Categoria categoria = null;
-                    if (categoriaId != null) {
-                        categoria = categoriaDAO.findById(categoriaId);
-                    }
-                    return new Transacao(id, descricao, valor, data, tipo, categoria);
+                    return mapResultSetToTransacao(rs); // Usa o helper
                 }
             }
         } catch (SQLException e) {
@@ -75,21 +79,12 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
     @Override
     public List<Transacao> findAll() {
         List<Transacao> transacoes = new ArrayList<>();
-        String sql = "SELECT id, descricao, valor, data, tipo, categoria_id FROM transacoes";
+        // SQL ATUALIZADO
+        String sql = "SELECT * FROM transacoes ORDER BY data DESC";
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                int id = rs.getInt("id");
-                String descricao = rs.getString("descricao");
-                double valor = rs.getDouble("valor");
-                LocalDate data = rs.getDate("data").toLocalDate();
-                TipoCategoria tipo = TipoCategoria.valueOf(rs.getString("tipo"));
-                Integer categoriaId = rs.getObject("categoria_id", Integer.class);
-                Categoria categoria = null;
-                if (categoriaId != null) {
-                    categoria = categoriaDAO.findById(categoriaId);
-                }
-                transacoes.add(new Transacao(id, descricao, valor, data, tipo, categoria));
+                transacoes.add(mapResultSetToTransacao(rs)); // Usa o helper
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar todas as transações: " + e.getMessage());
@@ -100,24 +95,30 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
 
     @Override
     public void update(Transacao transacao) {
-        String sql = "UPDATE transacoes SET descricao = ?, valor = ?, data = ?, tipo = ?, categoria_id = ? WHERE id = ?";
+        // SQL ATUALIZADO
+        String sql = "UPDATE transacoes SET descricao = ?, valor = ?, data = ?, tipo = ?, categoria_id = ?, conta_id = ? WHERE id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, transacao.getDescricao());
             stmt.setDouble(2, transacao.getValor());
             stmt.setDate(3, Date.valueOf(transacao.getData()));
             stmt.setString(4, transacao.getTipo().name());
+
             if (transacao.getCategoria() != null) {
                 stmt.setInt(5, transacao.getCategoria().getId());
             } else {
                 stmt.setNull(5, java.sql.Types.INTEGER);
             }
-            stmt.setInt(6, transacao.getId());
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Transação '" + transacao.getDescricao() + "' atualizada com sucesso.");
+
+            // NOVO CAMPO
+            if (transacao.getConta() != null) {
+                stmt.setInt(6, transacao.getConta().getId());
             } else {
-                System.out.println("Nenhuma transação encontrada com ID: " + transacao.getId() + " para atualizar.");
+                stmt.setNull(6, java.sql.Types.INTEGER);
             }
+
+            stmt.setInt(7, transacao.getId()); // ID é o 7º parâmetro
+
+            stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Erro ao atualizar transação: " + e.getMessage());
             throw new RuntimeException("Erro ao atualizar transação.", e);
@@ -129,37 +130,22 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
         String sql = "DELETE FROM transacoes WHERE id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, id);
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows > 0) {
-                System.out.println("Transação com ID " + id + " excluída com sucesso.");
-            } else {
-                System.out.println("Nenhuma transação encontrada com ID: " + id + " para excluir.");
-            }
+            stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Erro ao excluir transação: " + e.getMessage());
             throw new RuntimeException("Erro ao excluir transação.", e);
         }
     }
 
-    //Busca transacoes cujas descrições contêm o termo de busca
     public List<Transacao> findAllByDescriptionLike(String termoBusca) {
         List<Transacao> transacoes = new ArrayList<>();
-        String sql = "SELECT id, descricao, valor, data, tipo, categoria_id FROM transacoes WHERE descricao LIKE ?";
+        // SQL ATUALIZADO
+        String sql = "SELECT * FROM transacoes WHERE descricao LIKE ? ORDER BY data DESC";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, "%" + termoBusca + "%"); // Usa % para buscar parcial
+            stmt.setString(1, "%" + termoBusca + "%");
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    int id = rs.getInt("id");
-                    String descricao = rs.getString("descricao");
-                    double valor = rs.getDouble("valor");
-                    LocalDate data = rs.getDate("data").toLocalDate();
-                    TipoCategoria tipo = TipoCategoria.valueOf(rs.getString("tipo"));
-                    Integer categoriaId = rs.getObject("categoria_id", Integer.class);
-                    Categoria categoria = null;
-                    if (categoriaId != null) {
-                        categoria = categoriaDAO.findById(categoriaId);
-                    }
-                    transacoes.add(new Transacao(id, descricao, valor, data, tipo, categoria));
+                    transacoes.add(mapResultSetToTransacao(rs)); // Usa o helper
                 }
             }
         } catch (SQLException e) {
@@ -167,5 +153,34 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
             throw new RuntimeException("Erro ao buscar transações por termo.", e);
         }
         return transacoes;
+    }
+
+    /**
+     * NOVO HELPER
+     * Mapeia um ResultSet para um objeto Transacao, buscando Categoria e Conta.
+     */
+    private Transacao mapResultSetToTransacao(ResultSet rs) throws SQLException {
+        int id = rs.getInt("id");
+        String descricao = rs.getString("descricao");
+        double valor = rs.getDouble("valor");
+        LocalDate data = rs.getDate("data").toLocalDate();
+        TipoCategoria tipo = TipoCategoria.valueOf(rs.getString("tipo"));
+
+        // Busca Categoria (pode ser nula)
+        Integer categoriaId = rs.getObject("categoria_id", Integer.class);
+        Categoria categoria = null;
+        if (categoriaId != null) {
+            categoria = categoriaDAO.findById(categoriaId);
+        }
+
+        // Busca Conta (pode ser nula)
+        Integer contaId = rs.getObject("conta_id", Integer.class);
+        Conta conta = null;
+        if (contaId != null) {
+            conta = contaDAO.findById(contaId);
+        }
+
+        // Usa o novo construtor
+        return new Transacao(id, descricao, valor, data, tipo, categoria, conta);
     }
 }

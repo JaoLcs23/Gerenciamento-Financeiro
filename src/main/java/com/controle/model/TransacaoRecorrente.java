@@ -9,14 +9,30 @@ public class TransacaoRecorrente {
     private double valor;
     private TipoCategoria tipo;
     private Categoria categoria;
-
-    // Campos específicos da recorrência
-    private int diaDoMes; // Ex: 5 (para todo dia 5)
+    private Conta conta;
+    private int diaDoMes;
     private LocalDate dataInicio;
     private LocalDate dataFim;
+    private LocalDate dataUltimoProcessamento;
 
-    // Controle para evitar duplicatas
-    private LocalDate dataUltimoProcessamento; // Última vez que gerou uma Transacao
+    public TransacaoRecorrente(String descricao, double valor, TipoCategoria tipo, Categoria categoria, Conta conta, int diaDoMes, LocalDate dataInicio, LocalDate dataFim) {
+        this.descricao = descricao;
+        this.valor = valor;
+        this.tipo = tipo;
+        this.categoria = categoria;
+        this.conta = conta;
+        this.diaDoMes = diaDoMes;
+        this.dataInicio = dataInicio;
+        this.dataFim = dataFim;
+    }
+
+    public TransacaoRecorrente(int id, String descricao, double valor, TipoCategoria tipo, Categoria categoria, Conta conta, int diaDoMes, LocalDate dataInicio, LocalDate dataFim, LocalDate dataUltimoProcessamento) {
+        this(descricao, valor, tipo, categoria, conta, diaDoMes, dataInicio, dataFim);
+        this.id = id;
+        this.dataUltimoProcessamento = dataUltimoProcessamento;
+    }
+
+    public TransacaoRecorrente() {}
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -28,6 +44,8 @@ public class TransacaoRecorrente {
     public void setTipo(TipoCategoria tipo) { this.tipo = tipo; }
     public Categoria getCategoria() { return categoria; }
     public void setCategoria(Categoria categoria) { this.categoria = categoria; }
+    public Conta getConta() { return conta; } // <-- NOVO
+    public void setConta(Conta conta) { this.conta = conta; } // <-- NOVO
     public int getDiaDoMes() { return diaDoMes; }
     public void setDiaDoMes(int diaDoMes) { this.diaDoMes = diaDoMes; }
     public LocalDate getDataInicio() { return dataInicio; }

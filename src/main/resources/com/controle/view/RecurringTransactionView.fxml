@@ -56,17 +56,20 @@
                 <ComboBox fx:id="categoryComboBox" promptText="Selecione a categoria" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
                 <Label fx:id="categoryErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
 
-                <Label text="Dia Lança.:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
-                <TextField fx:id="diaDoMesField" promptText="1-31" styleClass="text-field" prefHeight="40" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
-                <Label fx:id="diaDoMesErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
+                <Label text="Conta:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
+                <ComboBox fx:id="accountComboBox" promptText="Selecione a conta" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
+                <Label fx:id="accountErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
 
-                <Label text="Data Início:" GridPane.columnIndex="0" GridPane.rowIndex="6" />
-                <DatePicker fx:id="dataInicioPicker" styleClass="date-picker" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-                <Label fx:id="dataInicioErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+                <Label text="Dia Vencimento:" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                <TextField fx:id="diaDoMesField" promptText="1-31" styleClass="text-field" prefHeight="40" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+                <Label fx:id="diaDoMesErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+                <Label text="Data Início:" GridPane.columnIndex="2" GridPane.rowIndex="6" />
+                <DatePicker fx:id="dataInicioPicker" styleClass="date-picker" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="3" GridPane.rowIndex="6"/>
+                <Label fx:id="dataInicioErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="7"/>
 
-                <Label text="Data Fim:" GridPane.columnIndex="2" GridPane.rowIndex="6" />
-                <DatePicker fx:id="dataFimPicker" promptText="(Opcional)" styleClass="date-picker" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="3" GridPane.rowIndex="6"/>
-                <Label fx:id="dataFimErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="7"/>
+                <Label text="Data Fim:" GridPane.columnIndex="0" GridPane.rowIndex="8" />
+                <DatePicker fx:id="dataFimPicker" promptText="(Opcional)" styleClass="date-picker" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
+                <Label fx:id="dataFimErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="9"/>
             </GridPane>
 
             <HBox spacing="10" alignment="CENTER">
@@ -93,7 +96,8 @@
                     <TableColumn fx:id="colDescription" text="Descrição" prefWidth="180"/>
                     <TableColumn fx:id="colValue" text="Valor" prefWidth="80"/>
                     <TableColumn fx:id="colCategory" text="Categoria" prefWidth="120"/>
-                    <TableColumn fx:id="colDiaDoMes" text="Dia Lanç." prefWidth="80"/>
+                    <TableColumn fx:id="colAccount" text="Conta" prefWidth="120"/>
+                    <TableColumn fx:id="colDiaDoMes" text="Dia Venc." prefWidth="80"/>
                     <TableColumn fx:id="colDataInicio" text="Início" prefWidth="100"/>
                     <TableColumn fx:id="colDataFim" text="Fim" prefWidth="100"/>
                     <TableColumn fx:id="colUltimoProcessamento" text="Último Lanç." prefWidth="100"/>

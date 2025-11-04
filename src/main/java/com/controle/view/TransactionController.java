@@ -1,9 +1,6 @@
 package com.controle.view;
 
-import com.controle.model.Categoria;
-import com.controle.model.TipoCategoria;
-import com.controle.model.Transacao;
-import com.controle.model.Orcamento;
+import com.controle.model.*;
 import com.controle.service.GastoPessoalService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -22,18 +19,20 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import javafx.scene.control.ListCell;
 
 public class TransactionController extends BaseController {
 
     private int selectedTransactionId = 0;
 
     @FXML private Label fullScreenHintLabel;
-
     @FXML private TextField descriptionField;
     @FXML private TextField valueField;
     @FXML private DatePicker datePicker;
     @FXML private ComboBox<TipoCategoria> typeComboBox;
     @FXML private ComboBox<Categoria> categoryComboBox;
+    @FXML private ComboBox<Conta> accountComboBox;
     @FXML private TableView<Transacao> transactionTable;
     @FXML private TableColumn<Transacao, Integer> colId;
     @FXML private TableColumn<Transacao, String> colDescription;
@@ -41,24 +40,23 @@ public class TransactionController extends BaseController {
     @FXML private TableColumn<Transacao, LocalDate> colDate;
     @FXML private TableColumn<Transacao, TipoCategoria> colType;
     @FXML private TableColumn<Transacao, Categoria> colCategory;
-
+    @FXML private TableColumn<Transacao, Conta> colAccount;
     @FXML private Button addTransactionButton;
     @FXML private Button updateTransactionButton;
     @FXML private Button deleteTransactionButton;
     @FXML private Button newTransactionButton;
-
     @FXML private Label descriptionErrorLabel;
     @FXML private Label valueErrorLabel;
     @FXML private Label dateErrorLabel;
     @FXML private Label typeErrorLabel;
     @FXML private Label categoryErrorLabel;
-
+    @FXML private Label accountErrorLabel;
     @FXML private TextField searchField;
-
 
     private GastoPessoalService service;
     private ObservableList<Transacao> transactionsData = FXCollections.observableArrayList();
     private ObservableList<Categoria> categoriesList = FXCollections.observableArrayList();
+    private ObservableList<Conta> accountsList = FXCollections.observableArrayList();
 
     public TransactionController() {
         this.service = new GastoPessoalService();
@@ -69,41 +67,16 @@ public class TransactionController extends BaseController {
         typeComboBox.getItems().setAll(TipoCategoria.values());
 
         loadCategoriesForComboBox();
+        loadAccountsForComboBox();
+
+        configureComboBoxDisplay();
 
         typeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             filterCategoriesByType(newValue);
+            filterAccountsByType(newValue);
         });
 
-        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
-        colDescription.setCellValueFactory(new PropertyValueFactory<>("descricao"));
-        colValue.setCellValueFactory(new PropertyValueFactory<>("valor"));
-        colValue.setCellFactory(column -> new TableCell<Transacao, Double>() {
-            @Override
-            protected void updateItem(Double item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
-                    setText(currencyFormat.format(item));
-                }
-            }
-        });
-
-        colDate.setCellValueFactory(new PropertyValueFactory<>("data"));
-        colType.setCellValueFactory(new PropertyValueFactory<>("tipo"));
-        colCategory.setCellValueFactory(new PropertyValueFactory<>("categoria"));
-        colCategory.setCellFactory(column -> new TableCell<Transacao, Categoria>() {
-            @Override
-            protected void updateItem(Categoria item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNome());
-                }
-            }
-        });
+        setupTableColumns();
 
         transactionTable.setItems(transactionsData);
         transactionTable.setPlaceholder(new Label("Nenhuma transação encontrada"));
@@ -120,6 +93,72 @@ public class TransactionController extends BaseController {
                 (observable, oldValue, newValue) -> showTransactionDetails(newValue));
     }
 
+    private void configureComboBoxDisplay() {
+        categoryComboBox.setCellFactory(cell -> new ListCell<Categoria>() {
+            @Override
+            protected void updateItem(Categoria item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNome());
+            }
+        });
+        categoryComboBox.setButtonCell(new ListCell<Categoria>() {
+            @Override
+            protected void updateItem(Categoria item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNome());
+            }
+        });
+
+        // Formata o ComboBox de Conta
+        accountComboBox.setCellFactory(cell -> new ListCell<Conta>() {
+            @Override
+            protected void updateItem(Conta item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNome());
+            }
+        });
+        accountComboBox.setButtonCell(new ListCell<Conta>() {
+            @Override
+            protected void updateItem(Conta item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNome());
+            }
+        });
+    }
+
+    private void setupTableColumns() {
+        colId.setCellValueFactory(new PropertyValueFactory<>("id"));
+        colDescription.setCellValueFactory(new PropertyValueFactory<>("descricao"));
+        colValue.setCellValueFactory(new PropertyValueFactory<>("valor"));
+        colValue.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) { setText(null); }
+                else { setText(NumberFormat.getCurrencyInstance(new Locale("pt", "BR")).format(item)); }
+            }
+        });
+        colDate.setCellValueFactory(new PropertyValueFactory<>("data"));
+        colType.setCellValueFactory(new PropertyValueFactory<>("tipo"));
+        colCategory.setCellValueFactory(new PropertyValueFactory<>("categoria"));
+        colCategory.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Categoria item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNome());
+            }
+        });
+
+        colAccount.setCellValueFactory(new PropertyValueFactory<>("conta"));
+        colAccount.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(Conta item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.getNome());
+            }
+        });
+    }
+
     private void showTransactionDetails(Transacao transacao) {
         clearAllErrors();
         if (transacao != null) {
@@ -129,6 +168,7 @@ public class TransactionController extends BaseController {
             datePicker.setValue(transacao.getData());
             typeComboBox.getSelectionModel().select(transacao.getTipo());
             categoryComboBox.getSelectionModel().select(transacao.getCategoria());
+            accountComboBox.getSelectionModel().select(transacao.getConta());
             setFormMode(true);
         } else {
             handleNewTransaction(null);
@@ -149,6 +189,7 @@ public class TransactionController extends BaseController {
         datePicker.setValue(null);
         typeComboBox.getSelectionModel().clearSelection();
         categoryComboBox.getSelectionModel().clearSelection();
+        accountComboBox.getSelectionModel().clearSelection();
         selectedTransactionId = 0;
         transactionTable.getSelectionModel().clearSelection();
         setFormMode(false);
@@ -163,41 +204,23 @@ public class TransactionController extends BaseController {
 
         String description = descriptionField.getText();
         double value;
-        try {
-            value = Double.parseDouble(valueField.getText().replace(",", "."));
-        } catch (NumberFormatException e) {
-            showFieldError(valueField, valueErrorLabel, "Valor inválido. Use números e '.' para decimais.");
-            showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados.");
+        try { value = Double.parseDouble(valueField.getText().replace(",", ".")); }
+        catch (NumberFormatException e) {
+            showFieldError(valueField, valueErrorLabel, "Valor inválido.");
             return;
         }
         LocalDate date = datePicker.getValue();
         TipoCategoria type = typeComboBox.getSelectionModel().getSelectedItem();
         Categoria category = categoryComboBox.getSelectionModel().getSelectedItem();
+        Conta conta = accountComboBox.getSelectionModel().getSelectedItem();
 
         boolean isValid = true;
-        if (description == null || description.trim().isEmpty()) {
-            showFieldError(descriptionField, descriptionErrorLabel, "Descrição é obrigatória.");
-            isValid = false;
-        }
-        if (value <= 0) {
-            showFieldError(valueField, valueErrorLabel, "Valor deve ser positivo.");
-            isValid = false;
-        }
-        if (date == null) {
-            showFieldError(datePicker, dateErrorLabel, "Data é obrigatória.");
-            isValid = false;
-        } else if (date.isAfter(LocalDate.now())) {
-            showFieldError(datePicker, dateErrorLabel, "Data não pode ser futura.");
-            isValid = false;
-        }
-        if (type == null) {
-            showFieldError(typeComboBox, typeErrorLabel, "Tipo é obrigatório.");
-            isValid = false;
-        }
-        if (category == null) {
-            showFieldError(categoryComboBox, categoryErrorLabel, "Categoria é obrigatória.");
-            isValid = false;
-        }
+        if (description == null || description.trim().isEmpty()) { showFieldError(descriptionField, descriptionErrorLabel, "Descrição é obrigatória."); isValid = false; }
+        if (value <= 0) { showFieldError(valueField, valueErrorLabel, "Valor deve ser positivo."); isValid = false; }
+        if (date == null) { showFieldError(datePicker, dateErrorLabel, "Data é obrigatória."); isValid = false; }
+        else if (date.isAfter(LocalDate.now())) { showFieldError(datePicker, dateErrorLabel, "Data não pode ser futura."); isValid = false; }
+        if (type == null) { showFieldError(typeComboBox, typeErrorLabel, "Tipo é obrigatório."); isValid = false; }
+        if (conta == null) { showFieldError(accountComboBox, accountErrorLabel, "Conta é obrigatória."); isValid = false; }
 
         if (type != null && category != null && category.getTipo() != type) {
             showFieldError(categoryComboBox, categoryErrorLabel, "Tipo da categoria não corresponde ao tipo da transação.");
@@ -209,26 +232,28 @@ public class TransactionController extends BaseController {
             return;
         }
 
-        // LÓGICA DE VERIFICAÇÃO DE ORÇAMENTO
-        if (type == TipoCategoria.DESPESA) {
+        String categoriaNome = (category != null) ? category.getNome() : null;
+        String contaNome = conta.getNome();
+
+        if (type == TipoCategoria.DESPESA && category != null) {
             Orcamento orcamento = service.getOrcamentoCategoria(category, date.getMonthValue(), date.getYear());
 
             if (orcamento != null) {
                 double gastoAtual = service.getGastoAtualCategoria(category, date.getMonthValue(), date.getYear());
-
                 double valorAntigo = 0.0;
+
                 if (selectedTransactionId > 0) {
                     Transacao transacaoOriginal = service.buscarTransacaoPorId(selectedTransactionId);
-
-                    if (transacaoOriginal != null && transacaoOriginal.getCategoria().getId() == category.getId()) {
+                    if (transacaoOriginal != null && transacaoOriginal.getCategoria() != null && transacaoOriginal.getCategoria().getId() == category.getId()) {
                         valorAntigo = transacaoOriginal.getValor();
                     }
                 }
 
-                double gastoSemEstaTransacao = gastoAtual - valorAntigo;
-                double novoTotalProjetado = gastoSemEstaTransacao + value;
+                double gastoAjustado = gastoAtual - valorAntigo;
+                double novoTotalProjetado = gastoAjustado + value;
+                double limite = orcamento.getValorLimite();
 
-                if (novoTotalProjetado > orcamento.getValorLimite()) {
+                if (novoTotalProjetado > limite) {
                     Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
                     confirmAlert.setTitle("Orçamento Excedido");
                     confirmAlert.setHeaderText("Atenção: Esta transação ultrapassa o seu orçamento!");
@@ -240,10 +265,10 @@ public class TransactionController extends BaseController {
                                     "(Valor excedido: R$ %.2f)\n\n" +
                                     "Deseja salvar mesmo assim?",
                             category.getNome(),
-                            orcamento.getValorLimite(),
-                            gastoSemEstaTransacao,
+                            limite,
+                            gastoAjustado,
                             novoTotalProjetado,
-                            novoTotalProjetado - orcamento.getValorLimite()
+                            novoTotalProjetado - limite
                     ));
 
                     Optional<ButtonType> result = confirmAlert.showAndWait();
@@ -256,11 +281,11 @@ public class TransactionController extends BaseController {
 
         try {
             if (selectedTransactionId == 0) {
-                service.adicionarTransacao(description, value, date, type, category.getNome());
+                service.adicionarTransacao(description, value, date, type, categoriaNome, contaNome);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação adicionada com sucesso!");
             } else {
-                Transacao transacaoAtualizada = new Transacao(selectedTransactionId, description, value, date, type, category);
-                service.atualizarTransacao(transacaoAtualizada, category.getNome());
+                Transacao transacaoAtualizada = new Transacao(selectedTransactionId, description, value, date, type, category, conta);
+                service.atualizarTransacao(transacaoAtualizada, categoriaNome, contaNome);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação atualizada com sucesso!");
             }
             loadTransactions(searchField.getText());
@@ -279,12 +304,10 @@ public class TransactionController extends BaseController {
             showAlert(Alert.AlertType.WARNING, "Nenhuma Seleção", "Por favor, selecione uma transação na tabela para excluir.");
             return;
         }
-
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle("Confirmar Exclusão");
         confirmAlert.setHeaderText("Excluir Transação?");
         confirmAlert.setContentText("Tem certeza que deseja excluir a transação selecionada?");
-
         Optional<ButtonType> result = confirmAlert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
@@ -305,19 +328,44 @@ public class TransactionController extends BaseController {
         categoryComboBox.setItems(categoriesList);
     }
 
+    private void loadAccountsForComboBox() {
+        accountsList.clear();
+        accountsList.addAll(service.listarTodasContas());
+        accountComboBox.setItems(accountsList);
+    }
+
     private void filterCategoriesByType(TipoCategoria selectedType) {
         if (selectedType == null) {
             categoryComboBox.setItems(categoriesList);
             return;
         }
-        ObservableList<Categoria> filteredList = FXCollections.observableArrayList();
-        for (Categoria cat : categoriesList) {
-            if (cat.getTipo() == selectedType) {
-                filteredList.add(cat);
-            }
-        }
+        ObservableList<Categoria> filteredList = categoriesList.stream()
+                .filter(cat -> cat.getTipo() == selectedType)
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
         categoryComboBox.setItems(filteredList);
         categoryComboBox.getSelectionModel().clearSelection();
+    }
+
+    private void filterAccountsByType(TipoCategoria selectedType) {
+        if (selectedType == null) {
+            accountComboBox.setItems(accountsList);
+            return;
+        }
+
+        ObservableList<Conta> filteredList;
+        if (selectedType == TipoCategoria.DESPESA) {
+            filteredList = accountsList.stream()
+                    .filter(conta -> conta.getTipo() == TipoConta.CONTA_CORRENTE ||
+                            conta.getTipo() == TipoConta.DINHEIRO || // <-- ALTERADO AQUI
+                            conta.getTipo() == TipoConta.CARTAO_DE_CREDITO)
+                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
+        } else {
+            filteredList = accountsList.stream()
+                    .filter(conta -> conta.getTipo() != TipoConta.CARTAO_DE_CREDITO)
+                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
+        }
+        accountComboBox.setItems(filteredList);
+        accountComboBox.getSelectionModel().clearSelection();
     }
 
     private void loadTransactions(String searchTerm) {
@@ -335,10 +383,8 @@ public class TransactionController extends BaseController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
             Parent root = loader.load();
-
             MenuController menuController = loader.getController();
             menuController.setPrimaryStage(primaryStage);
-
             Scene scene = new Scene(root);
             scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
             primaryStage.setScene(scene);
@@ -346,7 +392,6 @@ public class TransactionController extends BaseController {
             primaryStage.show();
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-
         } catch (IOException e) {
             System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
             e.printStackTrace();
@@ -361,5 +406,6 @@ public class TransactionController extends BaseController {
         clearFieldError(datePicker, dateErrorLabel);
         clearFieldError(typeComboBox, typeErrorLabel);
         clearFieldError(categoryComboBox, categoryErrorLabel);
+        clearFieldError(accountComboBox, accountErrorLabel);
     }
 }

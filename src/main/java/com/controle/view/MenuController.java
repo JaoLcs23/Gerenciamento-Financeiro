@@ -15,7 +15,7 @@ import com.controle.view.TransactionController;
 import com.controle.view.RecurringTransactionController;
 import com.controle.view.BudgetController;
 import com.controle.view.ReportsController;
-
+import com.controle.view.AccountController;
 import java.io.IOException;
 
 public class MenuController extends BaseController {
@@ -43,6 +43,32 @@ public class MenuController extends BaseController {
             System.err.println("Erro ao carregar a tela de categorias: " + e.getMessage());
             e.printStackTrace();
             showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar a tela de categorias.");
+        }
+    }
+
+    @FXML
+    private void handleManageAccounts(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/AccountView.fxml"));
+            Parent root = loader.load();
+
+            AccountController accountController = loader.getController();
+            accountController.setPrimaryStage(primaryStage);
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
+
+            primaryStage.setScene(scene);
+            primaryStage.setTitle("Controle de Gastos Pessoais - Contas");
+            primaryStage.show();
+
+            applyFullScreen();
+            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
+
+        } catch (IOException e) {
+            System.err.println("Erro ao carregar a tela de contas: " + e.getMessage());
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar a tela de contas.");
         }
     }
 
@@ -139,6 +165,7 @@ public class MenuController extends BaseController {
             primaryStage.setScene(scene);
             primaryStage.setTitle("Controle de Gastos Pessoais - Relatórios");
             primaryStage.show();
+
             applyFullScreen();
             showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
 

@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javafx.scene.control.ListCell; // <-- NOVO IMPORT
 
 public class BudgetController extends BaseController {
 
@@ -73,6 +74,30 @@ public class BudgetController extends BaseController {
         filtroAnoComboBox.setValue(anoAtual);
 
         loadCategoriesForComboBox();
+
+        categoryComboBox.setCellFactory(cell -> new ListCell<Categoria>() {
+            @Override
+            protected void updateItem(Categoria item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNome());
+                }
+            }
+        });
+        categoryComboBox.setButtonCell(new ListCell<Categoria>() {
+            @Override
+            protected void updateItem(Categoria item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getNome());
+                }
+            }
+        });
+
         setupTableColumns();
 
         filtroMesComboBox.setOnAction(e -> loadBudgets());

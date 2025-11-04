@@ -59,6 +59,11 @@
                 <Label text="Categoria:" GridPane.columnIndex="2" GridPane.rowIndex="4" />
                 <ComboBox fx:id="categoryComboBox" promptText="Selecione a categoria" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
                 <Label fx:id="categoryErrorLabel" styleClass="error-message-label" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
+
+                <Label text="Conta:" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+                <ComboBox fx:id="accountComboBox" promptText="Selecione a conta" styleClass="combo-box" prefHeight="40" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+                <Label fx:id="accountErrorLabel" styleClass="error-message-label" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+
             </GridPane>
 
             <HBox spacing="10" alignment="CENTER">
@@ -87,7 +92,7 @@
                     <TableColumn fx:id="colDate" text="Data" prefWidth="100"/>
                     <TableColumn fx:id="colType" text="Tipo" prefWidth="100"/>
                     <TableColumn fx:id="colCategory" text="Categoria" prefWidth="150"/>
-                </columns>
+                    <TableColumn fx:id="colAccount" text="Conta" prefWidth="150"/> </columns>
                 <columnResizePolicy>
                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
                 </columnResizePolicy>
