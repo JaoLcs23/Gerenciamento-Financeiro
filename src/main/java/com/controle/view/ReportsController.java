@@ -13,6 +13,10 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
 import javafx.scene.Node;
 import javafx.scene.chart.PieChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.application.Platform;
 import javafx.stage.DirectoryChooser;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -43,10 +47,14 @@ public class ReportsController extends BaseController {
     @FXML private TableColumn<CategorySummary, Double> colCategoryAmount;
     @FXML private PieChart categoryPieChart;
     @FXML private Button exportPdfButton;
+    @FXML private LineChart<String, Number> patrimonioLineChart;
+    @FXML private CategoryAxis xAxisDate;
+    @FXML private NumberAxis yAxisValue;
 
     private GastoPessoalService service;
     private ObservableList<CategorySummary> categorySummaryData = FXCollections.observableArrayList();
     private Locale brLocale = new Locale("pt", "BR");
+    private DateTimeFormatter lineChartDateFormatter = DateTimeFormatter.ofPattern("dd/MM");
 
     public ReportsController() {
         this.service = new GastoPessoalService();
@@ -70,6 +78,8 @@ public class ReportsController extends BaseController {
 
         categoryExpensesTable.setItems(categorySummaryData);
         categoryExpensesTable.setPlaceholder(new Label("Nenhum dado para o período"));
+
+        categoryPieChart.setLabelsVisible(false);
 
         LocalDate firstDayOfCurrentMonth = LocalDate.now().withDayOfMonth(1);
         LocalDate today = LocalDate.now();
@@ -125,7 +135,7 @@ public class ReportsController extends BaseController {
     private void handleGenerateReport(ActionEvent event) {
         if (!validateDatePickers(startDatePicker, endDatePicker, startDateErrorLabel, endDateErrorLabel)) {
             showAlert(Alert.AlertType.WARNING, "Datas Inválidas", "Por favor, corrija as datas do relatório.");
-            exportPdfButton.setDisable(true); // Desabilita se a data for inválida
+            exportPdfButton.setDisable(true);
             return;
         }
 
@@ -141,22 +151,86 @@ public class ReportsController extends BaseController {
             categoryExpensesTable.refresh();
             updateCategoryPieChart(expensesMap);
 
-            exportPdfButton.setDisable(false); // Habilita o botão de PDF
+            updatePatrimonioLineChart(startDate, endDate);
+
+            exportPdfButton.setDisable(false);
 
         } catch (RuntimeException e) {
-            showAlert(Alert.AlertType.ERROR, "Erro ao Gerar Relatório", "Ocorreu um erro ao gerar o relatório de categorias: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Erro ao Gerar Relatório", "Ocorreu um erro ao gerar o relatório: " + e.getMessage());
             e.printStackTrace();
             exportPdfButton.setDisable(true);
         }
     }
 
-    // Método chamado em "EXPORTAR PDF"
+    private void updatePatrimonioLineChart(LocalDate startDate, LocalDate endDate) {
+        patrimonioLineChart.getData().clear();
+
+        try {
+            Map<LocalDate, Double> dadosEvolucao = service.getPatrimonioEvolucao(startDate, endDate);
+
+            if(dadosEvolucao.isEmpty()) {
+                patrimonioLineChart.setTitle("Sem dados de patrimônio para o período");
+                yAxisValue.setLowerBound(0);
+                yAxisValue.setUpperBound(100);
+                yAxisValue.setTickUnit(20);
+                return;
+            }
+
+            patrimonioLineChart.setTitle("Evolução do Patrimônio");
+
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Patrimônio");
+
+            double minPatrimonio = Double.MAX_VALUE;
+            double maxPatrimonio = Double.MIN_VALUE;
+
+            for (Map.Entry<LocalDate, Double> entry : dadosEvolucao.entrySet()) {
+                String dataFormatada = entry.getKey().format(lineChartDateFormatter);
+                double valor = entry.getValue();
+                series.getData().add(new XYChart.Data<>(dataFormatada, valor));
+
+                if (valor < minPatrimonio) minPatrimonio = valor;
+                if (valor > maxPatrimonio) maxPatrimonio = valor;
+            }
+
+            patrimonioLineChart.getData().add(series);
+
+            double range = maxPatrimonio - minPatrimonio;
+            double padding;
+
+            if (range == 0) {
+                padding = maxPatrimonio * 0.1;
+                if (padding == 0) padding = 100;
+            } else {
+                padding = range * 0.1;
+            }
+
+            yAxisValue.setLowerBound(minPatrimonio - padding);
+            yAxisValue.setUpperBound(maxPatrimonio + padding);
+
+            double tickUnit = (yAxisValue.getUpperBound() - yAxisValue.getLowerBound()) / 5;
+            yAxisValue.setTickUnit(tickUnit);
+
+            for (XYChart.Data<String, Number> data : series.getData()) {
+                Tooltip tooltip = new Tooltip(
+                        data.getXValue() + "\n" +
+                                NumberFormat.getCurrencyInstance(brLocale).format(data.getYValue())
+                );
+                Tooltip.install(data.getNode(), tooltip);
+            }
+
+        } catch (Exception e) {
+            patrimonioLineChart.setTitle("Erro ao carregar gráfico de patrimônio");
+            e.printStackTrace();
+        }
+    }
+
     @FXML
     private void handleExportPDF(ActionEvent event) {
+        // ... (seu método de exportar PDF - sem mudanças) ...
         LocalDate startDate = startDatePicker.getValue();
         LocalDate endDate = endDatePicker.getValue();
 
-        // Escolher onde salvar
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("Salvar PDF em...");
         File selectedDirectory = directoryChooser.showDialog(primaryStage);
@@ -166,12 +240,10 @@ public class ReportsController extends BaseController {
             return;
         }
 
-        // Criar o nome do arquivo
         String dateString = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String fileName = "Relatorio_Financeiro_" + dateString + ".pdf";
         File file = new File(selectedDirectory, fileName);
 
-        // Gerar o PDF
         try (PDDocument document = new PDDocument()) {
             PDPage page = new PDPage();
             document.addPage(page);
@@ -222,7 +294,6 @@ public class ReportsController extends BaseController {
         }
     }
 
-    // Método para facilitar a escrita de texto no PDF
     private void writeText(PDPageContentStream contentStream, PDType1Font font, int fontSize, float x, float y, String text) throws IOException {
         contentStream.beginText();
         contentStream.setFont(font, fontSize);

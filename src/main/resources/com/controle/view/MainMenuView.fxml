@@ -44,7 +44,7 @@
                 </graphic>
             </Button>
 
-            <Button onAction="#handleManageMovimentacoes" text="MOVIMENTAÇÕES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <Button onAction="#handleManageMovimentacoes" text="MOVIMENTAÇÕES" styleClass="menu-button, menu-button-blue" GridPane.columnIndex="1" GridPane.rowIndex="1">
                 <graphic>
                     <Region styleClass="menu-icon, icon-recycle" />
                 </graphic>
@@ -55,15 +55,15 @@
                     <Region styleClass="menu-icon, icon-piggy" />
                 </graphic>
             </Button>
-            <Button onAction="#handleViewReports" text="RELATÓRIOS" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="2">
+            <Button onAction="#handleManageRecurringTransactions" text="TRANSAÇÕES RECORRENTES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="2">
                 <graphic>
-                    <Region styleClass="menu-icon, icon-graph" />
+                    <Region styleClass="menu-icon, icon-recycle" />
                 </graphic>
             </Button>
 
-            <Button onAction="#handleManageRecurringTransactions" text="TRANSAÇÕES RECORRENTES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" maxWidth="Infinity">
+            <Button onAction="#handleViewReports" text="RELATÓRIOS" styleClass="menu-button, menu-button-green" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2" maxWidth="Infinity">
                 <graphic>
-                    <Region styleClass="menu-icon, icon-recycle" />
+                    <Region styleClass="menu-icon, icon-graph" />
                 </graphic>
             </Button>
 

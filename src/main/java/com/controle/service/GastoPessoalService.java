@@ -642,13 +642,15 @@ public class GastoPessoalService {
             conn.setAutoCommit(false);
 
             try {
-                double saldoAtualOrigem = calcularSaldoAtual(contaOrigem, conn);
+                if (contaOrigem.getTipo() != TipoConta.CARTAO_DE_CREDITO) {
+                    double saldoAtualOrigem = calcularSaldoAtual(contaOrigem, conn);
 
-                if (saldoAtualOrigem < valor) {
-                    throw new IllegalArgumentException(
-                            String.format("Saldo insuficiente na conta '%s'. Saldo atual: R$ %.2f",
-                                    contaOrigem.getNome(), saldoAtualOrigem)
-                    );
+                    if (saldoAtualOrigem < valor) {
+                        throw new IllegalArgumentException(
+                                String.format("Saldo insuficiente na conta '%s'. Saldo atual: R$ %.2f",
+                                        contaOrigem.getNome(), saldoAtualOrigem)
+                        );
+                    }
                 }
 
                 Transacao despesa = new Transacao(
@@ -690,7 +692,15 @@ public class GastoPessoalService {
             if (conta == null) {
                 throw new IllegalArgumentException("Conta não encontrada.");
             }
-            return calcularSaldoAtual(conta, conn);
+
+            double saldoCalculado = calcularSaldoAtual(conta, conn);
+
+            if (conta.getTipo() == TipoConta.CARTAO_DE_CREDITO) {
+                return -saldoCalculado;
+            } else {
+                return saldoCalculado;
+            }
+
         } catch (SQLException e) {
             throw new RuntimeException("Erro de conexão ao calcular saldo.", e);
         }
@@ -700,15 +710,70 @@ public class GastoPessoalService {
         if (conta == null) {
             throw new IllegalArgumentException("Conta não pode ser nula.");
         }
+
         List<Transacao> transacoes = transacaoDAO.findByContaId(conta.getId(), conn);
         double balancoTransacoes = 0.0;
-        for (Transacao t : transacoes) {
-            if (t.getTipo() == TipoCategoria.RECEITA) {
-                balancoTransacoes += t.getValor();
-            } else if (t.getTipo() == TipoCategoria.DESPESA) {
-                balancoTransacoes -= t.getValor();
+
+        if (conta.getTipo() == TipoConta.CARTAO_DE_CREDITO) {
+            for (Transacao t : transacoes) {
+                if (t.getTipo() == TipoCategoria.DESPESA) {
+                    balancoTransacoes += t.getValor();
+                } else if (t.getTipo() == TipoCategoria.RECEITA) {
+                    balancoTransacoes -= t.getValor();
+                }
+            }
+        } else {
+            for (Transacao t : transacoes) {
+                if (t.getTipo() == TipoCategoria.RECEITA) {
+                    balancoTransacoes += t.getValor();
+                } else if (t.getTipo() == TipoCategoria.DESPESA) {
+                    balancoTransacoes -= t.getValor();
+                }
             }
         }
+
         return conta.getSaldoInicial() + balancoTransacoes;
+    }
+
+    public Map<LocalDate, Double> getPatrimonioEvolucao(LocalDate inicio, LocalDate fim) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+
+            List<Conta> contas = contaDAO.findAll(conn);
+            double patrimonioBase = contas.stream()
+                    .mapToDouble(Conta::getSaldoInicial)
+                    .sum();
+
+            List<Transacao> todasTransacoes = transacaoDAO.findAll(conn);
+
+            double balancoAteInicio = todasTransacoes.stream()
+                    .filter(t -> t.getData().isBefore(inicio))
+                    .mapToDouble(t -> t.getTipo() == TipoCategoria.RECEITA ? t.getValor() : -t.getValor())
+                    .sum();
+
+            double patrimonioCorrente = patrimonioBase + balancoAteInicio;
+
+            Map<LocalDate, Double> mudancasDiarias = todasTransacoes.stream()
+                    .filter(t -> !t.getData().isBefore(inicio) && !t.getData().isAfter(fim))
+                    .collect(Collectors.groupingBy(
+                            Transacao::getData,
+                            Collectors.summingDouble(t -> t.getTipo() == TipoCategoria.RECEITA ? t.getValor() : -t.getValor())
+                    ));
+
+            Map<LocalDate, Double> evolucao = new java.util.TreeMap<>();
+            LocalDate dataAtual = inicio;
+
+            while (!dataAtual.isAfter(fim)) {
+                patrimonioCorrente += mudancasDiarias.getOrDefault(dataAtual, 0.0);
+
+                evolucao.put(dataAtual, patrimonioCorrente);
+
+                dataAtual = dataAtual.plusDays(1);
+            }
+
+            return evolucao;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro de conexão ao calcular evolução do patrimônio.", e);
+        }
     }
 }
