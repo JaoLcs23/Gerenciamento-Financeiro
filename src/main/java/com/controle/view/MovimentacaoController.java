@@ -40,8 +40,8 @@ public class MovimentacaoController extends BaseController {
         contaOrigemComboBox.setItems(contasOrigemList);
         contaDestinoComboBox.setItems(contasDestinoList);
 
-        configureComboBoxDisplay(contaOrigemComboBox);
-        configureComboBoxDisplay(contaDestinoComboBox);
+        setupContaComboBoxFormatter(contaOrigemComboBox);
+        setupContaComboBoxFormatter(contaDestinoComboBox);
 
         dataPicker.setValue(LocalDate.now());
         clearAllErrors();
@@ -56,23 +56,6 @@ public class MovimentacaoController extends BaseController {
         }
     }
 
-    private void configureComboBoxDisplay(ComboBox<Conta> comboBox) {
-        comboBox.setCellFactory(cell -> new ListCell<Conta>() {
-            @Override
-            protected void updateItem(Conta item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-        comboBox.setButtonCell(new ListCell<Conta>() {
-            @Override
-            protected void updateItem(Conta item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-    }
-
     @FXML
     private void handleMovimentar(ActionEvent event) {
         clearAllErrors();
@@ -80,18 +63,14 @@ public class MovimentacaoController extends BaseController {
             showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados.");
             return;
         }
-
         Conta origem = contaOrigemComboBox.getValue();
         Conta destino = contaDestinoComboBox.getValue();
         double valor = Double.parseDouble(valorField.getText().replace(",", "."));
         LocalDate data = dataPicker.getValue();
-
         try {
             service.transferirFundos(origem, destino, valor, data);
-
             showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Movimentação registrada com sucesso!");
             handleLimpar(null);
-
         } catch (RuntimeException e) {
             showAlert(Alert.AlertType.ERROR, "Erro na Movimentação", e.getMessage());
             e.printStackTrace();
@@ -102,7 +81,6 @@ public class MovimentacaoController extends BaseController {
         boolean isValid = true;
         Conta origem = contaOrigemComboBox.getValue();
         Conta destino = contaDestinoComboBox.getValue();
-
         if (origem == null) {
             showFieldError(contaOrigemComboBox, origemErrorLabel, "Conta de origem é obrigatória.");
             isValid = false;
@@ -115,7 +93,6 @@ public class MovimentacaoController extends BaseController {
             showFieldError(contaDestinoComboBox, destinoErrorLabel, "Contas não podem ser iguais.");
             isValid = false;
         }
-
         try {
             double valor = Double.parseDouble(valorField.getText().replace(",", "."));
             if (valor <= 0) {
@@ -126,7 +103,6 @@ public class MovimentacaoController extends BaseController {
             showFieldError(valorField, valorErrorLabel, "Valor inválido.");
             isValid = false;
         }
-
         if (dataPicker.getValue() == null) {
             showFieldError(dataPicker, dataErrorLabel, "Data é obrigatória.");
             isValid = false;
@@ -134,7 +110,6 @@ public class MovimentacaoController extends BaseController {
             showFieldError(dataPicker, dataErrorLabel, "Data não pode ser futura.");
             isValid = false;
         }
-
         return isValid;
     }
 
@@ -145,28 +120,6 @@ public class MovimentacaoController extends BaseController {
         valorField.clear();
         dataPicker.setValue(LocalDate.now());
         clearAllErrors();
-    }
-
-    @FXML
-    private void handleGoBack(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
-            Parent root = loader.load();
-            MenuController menuController = loader.getController();
-            menuController.setPrimaryStage(primaryStage);
-
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-            primaryStage.setScene(scene);
-            primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
-            primaryStage.show();
-
-            applyFullScreen();
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar o menu principal.");
-        }
     }
 
     @Override

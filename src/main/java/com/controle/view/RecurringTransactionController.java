@@ -70,15 +70,14 @@ public class RecurringTransactionController extends BaseController {
     @FXML
     public void initialize() {
         typeComboBox.getItems().setAll(TipoCategoria.values());
+
         loadCategoriesForComboBox();
         loadAccountsForComboBox();
 
-        configureComboBoxDisplay();
-
-        typeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            filterCategoriesByType(newValue);
-            filterAccountsByType(newValue);
-        });
+        setupCategoriaComboBoxFormatter(categoryComboBox);
+        setupContaComboBoxFormatter(accountComboBox);
+        setupCategoriaFilter(typeComboBox, categoryComboBox, categoriesList);
+        setupContaFilter(typeComboBox, accountComboBox, accountsList);
 
         setupTableColumns();
 
@@ -94,39 +93,8 @@ public class RecurringTransactionController extends BaseController {
         clearAllErrors();
     }
 
-    private void configureComboBoxDisplay() {
-        categoryComboBox.setCellFactory(cell -> new ListCell<Categoria>() {
-            @Override
-            protected void updateItem(Categoria item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-        categoryComboBox.setButtonCell(new ListCell<Categoria>() {
-            @Override
-            protected void updateItem(Categoria item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-
-        accountComboBox.setCellFactory(cell -> new ListCell<Conta>() {
-            @Override
-            protected void updateItem(Conta item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-        accountComboBox.setButtonCell(new ListCell<Conta>() {
-            @Override
-            protected void updateItem(Conta item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-    }
-
     private void setupTableColumns() {
+        // ... (código existente, sem mudanças)
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colDescription.setCellValueFactory(new PropertyValueFactory<>("descricao"));
         colValue.setCellValueFactory(new PropertyValueFactory<>("valor"));
@@ -210,18 +178,15 @@ public class RecurringTransactionController extends BaseController {
     @FXML
     private void handleAddOrUpdateRecurringTransaction(ActionEvent event) {
         clearAllErrors();
-
         String description = descriptionField.getText();
         TipoCategoria type = typeComboBox.getSelectionModel().getSelectedItem();
         Categoria category = categoryComboBox.getSelectionModel().getSelectedItem();
         Conta conta = accountComboBox.getSelectionModel().getSelectedItem();
         LocalDate dataInicio = dataInicioPicker.getValue();
         LocalDate dataFim = dataFimPicker.getValue();
-
         double value = 0.0;
         int diaDoMes = 0;
         boolean isValid = true;
-
         if (description == null || description.trim().isEmpty()) { showFieldError(descriptionField, descriptionErrorLabel, "Descrição é obrigatória."); isValid = false; }
         try {
             value = Double.parseDouble(valueField.getText().replace(",", "."));
@@ -237,15 +202,12 @@ public class RecurringTransactionController extends BaseController {
         if (dataInicio == null) { showFieldError(dataInicioPicker, dataInicioErrorLabel, "Data de início é obrigatória."); isValid = false; }
         if (dataFim != null && dataInicio != null && dataFim.isBefore(dataInicio)) { showFieldError(dataFimPicker, dataFimErrorLabel, "Data fim não pode ser antes do início."); isValid = false; }
         if (type != null && category != null && category.getTipo() != type) { showFieldError(categoryComboBox, categoryErrorLabel, "Tipo da categoria não bate com o tipo da transação."); isValid = false; }
-
         if (!isValid) {
             showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados.");
             return;
         }
-
         try {
             TransacaoRecorrente tr = new TransacaoRecorrente(description.trim(), value, type, category, conta, diaDoMes, dataInicio, dataFim);
-
             if (selectedRecurringId == 0) {
                 service.adicionarTransacaoRecorrente(tr);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Transação recorrente adicionada!");
@@ -312,61 +274,6 @@ public class RecurringTransactionController extends BaseController {
         accountsList.clear();
         accountsList.addAll(service.listarTodasContas());
         accountComboBox.setItems(accountsList);
-    }
-
-    private void filterCategoriesByType(TipoCategoria selectedType) {
-        if (selectedType == null) {
-            categoryComboBox.setItems(categoriesList);
-            return;
-        }
-        ObservableList<Categoria> filteredList = categoriesList.stream()
-                .filter(cat -> cat.getTipo() == selectedType)
-                .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        categoryComboBox.setItems(filteredList);
-        categoryComboBox.getSelectionModel().clearSelection();
-    }
-
-    private void filterAccountsByType(TipoCategoria selectedType) {
-        if (selectedType == null) {
-            accountComboBox.setItems(accountsList);
-            return;
-        }
-
-        ObservableList<Conta> filteredList;
-        if (selectedType == TipoCategoria.DESPESA) {
-            filteredList = accountsList.stream()
-                    .filter(conta -> conta.getTipo() == TipoConta.CONTA_CORRENTE ||
-                            conta.getTipo() == TipoConta.DINHEIRO || // <-- ALTERADO AQUI
-                            conta.getTipo() == TipoConta.CARTAO_DE_CREDITO)
-                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        } else {
-            filteredList = accountsList.stream()
-                    .filter(conta -> conta.getTipo() != TipoConta.CARTAO_DE_CREDITO)
-                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        }
-        accountComboBox.setItems(filteredList);
-        accountComboBox.getSelectionModel().clearSelection();
-    }
-
-    @FXML
-    private void handleGoBack(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
-            Parent root = loader.load();
-            MenuController menuController = loader.getController();
-            menuController.setPrimaryStage(primaryStage);
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-            primaryStage.setScene(scene);
-            primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
-            primaryStage.show();
-            applyFullScreen();
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-        } catch (IOException e) {
-            System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar o menu principal.");
-        }
     }
 
     @Override

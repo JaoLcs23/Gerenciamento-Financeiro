@@ -63,11 +63,6 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         }
     }
 
-    @Override
-    public void save(TransacaoRecorrente tr) {
-        throw new UnsupportedOperationException("Use save(TransacaoRecorrente, Connection)");
-    }
-
     public TransacaoRecorrente findById(Integer id, Connection conn) {
         String sql = "SELECT * FROM transacoes_recorrentes WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -84,11 +79,6 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         return null;
     }
 
-    @Override
-    public TransacaoRecorrente findById(Integer id) {
-        throw new UnsupportedOperationException("Use findById(Integer, Connection)");
-    }
-
     public List<TransacaoRecorrente> findAll(Connection conn) {
         List<TransacaoRecorrente> lista = new ArrayList<>();
         String sql = "SELECT * FROM transacoes_recorrentes";
@@ -102,11 +92,6 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
             throw new RuntimeException("Erro ao buscar transações recorrentes.", e);
         }
         return lista;
-    }
-
-    @Override
-    public List<TransacaoRecorrente> findAll() {
-        throw new UnsupportedOperationException("Use findAll(Connection)");
     }
 
     public void update(TransacaoRecorrente tr, Connection conn) {
@@ -143,11 +128,6 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
         }
     }
 
-    @Override
-    public void update(TransacaoRecorrente tr) {
-        throw new UnsupportedOperationException("Use update(TransacaoRecorrente, Connection)");
-    }
-
     public void delete(Integer id, Connection conn) {
         String sql = "DELETE FROM transacoes_recorrentes WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -157,11 +137,6 @@ public class TransacaoRecorrenteDAO extends AbstractDAO<TransacaoRecorrente, Int
             System.err.println("Erro ao excluir transação recorrente: " + e.getMessage());
             throw new RuntimeException("Erro ao excluir transação recorrente.", e);
         }
-    }
-
-    @Override
-    public void delete(Integer id) {
-        throw new UnsupportedOperationException("Use delete(Integer, Connection)");
     }
 
     public List<TransacaoRecorrente> findAllAtivas(LocalDate dataReferencia, Connection conn) {

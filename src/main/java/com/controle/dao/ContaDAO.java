@@ -33,11 +33,6 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
         }
     }
 
-    @Override
-    public void save(Conta conta) {
-        throw new UnsupportedOperationException("Use save(Conta, Connection)");
-    }
-
     public Conta findById(Integer id, Connection conn) {
         String sql = "SELECT * FROM contas WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -54,11 +49,6 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
         return null;
     }
 
-    @Override
-    public Conta findById(Integer id) {
-        throw new UnsupportedOperationException("Use findById(Integer, Connection)");
-    }
-
     public List<Conta> findAll(Connection conn) {
         List<Conta> contas = new ArrayList<>();
         String sql = "SELECT * FROM contas";
@@ -72,11 +62,6 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
             throw new RuntimeException("Erro ao buscar contas.", e);
         }
         return contas;
-    }
-
-    @Override
-    public List<Conta> findAll() {
-        throw new UnsupportedOperationException("Use findAll(Connection)");
     }
 
     public void update(Conta conta, Connection conn) {
@@ -96,11 +81,6 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
         }
     }
 
-    @Override
-    public void update(Conta conta) {
-        throw new UnsupportedOperationException("Use update(Conta, Connection)");
-    }
-
     public void delete(Integer id, Connection conn) {
         String sql = "DELETE FROM contas WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -110,11 +90,6 @@ public class ContaDAO extends AbstractDAO<Conta, Integer> {
             System.err.println("Erro ao excluir conta: " + e.getMessage());
             throw new RuntimeException("Erro ao excluir conta.", e);
         }
-    }
-
-    @Override
-    public void delete(Integer id) {
-        throw new UnsupportedOperationException("Use delete(Integer, Connection)");
     }
 
     public Conta findByNome(String nome, Connection conn) {

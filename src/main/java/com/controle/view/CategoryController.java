@@ -175,35 +175,6 @@ public class CategoryController extends BaseController {
         }
     }
 
-    @FXML
-    private void handleGoBack(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
-            Parent root = loader.load();
-
-            MenuController menuController = loader.getController();
-            if (menuController != null) {
-                menuController.setPrimaryStage(primaryStage);
-            }
-
-            Scene scene = new Scene(root);
-            if (getClass().getResource("/com/controle/view/style.css") != null) {
-                scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-            }
-
-            primaryStage.setScene(scene);
-            primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
-            primaryStage.show();
-
-            applyFullScreen();
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar o menu principal.");
-        }
-    }
-
     @Override
     protected void clearAllErrors() {
         clearFieldError(categoryNameField, categoryNameErrorLabel);

@@ -69,12 +69,10 @@ public class TransactionController extends BaseController {
         loadCategoriesForComboBox();
         loadAccountsForComboBox();
 
-        configureComboBoxDisplay();
-
-        typeComboBox.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            filterCategoriesByType(newValue);
-            filterAccountsByType(newValue);
-        });
+        setupCategoriaComboBoxFormatter(categoryComboBox);
+        setupContaComboBoxFormatter(accountComboBox);
+        setupCategoriaFilter(typeComboBox, categoryComboBox, categoriesList);
+        setupContaFilter(typeComboBox, accountComboBox, accountsList);
 
         setupTableColumns();
 
@@ -91,39 +89,6 @@ public class TransactionController extends BaseController {
 
         transactionTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showTransactionDetails(newValue));
-    }
-
-    private void configureComboBoxDisplay() {
-        categoryComboBox.setCellFactory(cell -> new ListCell<Categoria>() {
-            @Override
-            protected void updateItem(Categoria item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-        categoryComboBox.setButtonCell(new ListCell<Categoria>() {
-            @Override
-            protected void updateItem(Categoria item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-
-        // Formata o ComboBox de Conta
-        accountComboBox.setCellFactory(cell -> new ListCell<Conta>() {
-            @Override
-            protected void updateItem(Conta item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
-        accountComboBox.setButtonCell(new ListCell<Conta>() {
-            @Override
-            protected void updateItem(Conta item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty || item == null ? null : item.getNome());
-            }
-        });
     }
 
     private void setupTableColumns() {
@@ -148,7 +113,6 @@ public class TransactionController extends BaseController {
                 setText(empty || item == null ? null : item.getNome());
             }
         });
-
         colAccount.setCellValueFactory(new PropertyValueFactory<>("conta"));
         colAccount.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -201,7 +165,6 @@ public class TransactionController extends BaseController {
     @FXML
     private void handleAddOrUpdateTransaction(ActionEvent event) {
         clearAllErrors();
-
         String description = descriptionField.getText();
         double value;
         try { value = Double.parseDouble(valueField.getText().replace(",", ".")); }
@@ -213,7 +176,6 @@ public class TransactionController extends BaseController {
         TipoCategoria type = typeComboBox.getSelectionModel().getSelectedItem();
         Categoria category = categoryComboBox.getSelectionModel().getSelectedItem();
         Conta conta = accountComboBox.getSelectionModel().getSelectedItem();
-
         boolean isValid = true;
         if (description == null || description.trim().isEmpty()) { showFieldError(descriptionField, descriptionErrorLabel, "Descrição é obrigatória."); isValid = false; }
         if (value <= 0) { showFieldError(valueField, valueErrorLabel, "Valor deve ser positivo."); isValid = false; }
@@ -221,38 +183,30 @@ public class TransactionController extends BaseController {
         else if (date.isAfter(LocalDate.now())) { showFieldError(datePicker, dateErrorLabel, "Data não pode ser futura."); isValid = false; }
         if (type == null) { showFieldError(typeComboBox, typeErrorLabel, "Tipo é obrigatório."); isValid = false; }
         if (conta == null) { showFieldError(accountComboBox, accountErrorLabel, "Conta é obrigatória."); isValid = false; }
-
         if (type != null && category != null && category.getTipo() != type) {
             showFieldError(categoryComboBox, categoryErrorLabel, "Tipo da categoria não corresponde ao tipo da transação.");
             isValid = false;
         }
-
         if (!isValid) {
             showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados.");
             return;
         }
-
         String categoriaNome = (category != null) ? category.getNome() : null;
         String contaNome = conta.getNome();
-
         if (type == TipoCategoria.DESPESA && category != null) {
             Orcamento orcamento = service.getOrcamentoCategoria(category, date.getMonthValue(), date.getYear());
-
             if (orcamento != null) {
                 double gastoAtual = service.getGastoAtualCategoria(category, date.getMonthValue(), date.getYear());
                 double valorAntigo = 0.0;
-
                 if (selectedTransactionId > 0) {
                     Transacao transacaoOriginal = service.buscarTransacaoPorId(selectedTransactionId);
                     if (transacaoOriginal != null && transacaoOriginal.getCategoria() != null && transacaoOriginal.getCategoria().getId() == category.getId()) {
                         valorAntigo = transacaoOriginal.getValor();
                     }
                 }
-
                 double gastoAjustado = gastoAtual - valorAntigo;
                 double novoTotalProjetado = gastoAjustado + value;
                 double limite = orcamento.getValorLimite();
-
                 if (novoTotalProjetado > limite) {
                     Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
                     confirmAlert.setTitle("Orçamento Excedido");
@@ -270,7 +224,6 @@ public class TransactionController extends BaseController {
                             novoTotalProjetado,
                             novoTotalProjetado - limite
                     ));
-
                     Optional<ButtonType> result = confirmAlert.showAndWait();
                     if (result.isEmpty() || result.get() != ButtonType.OK) {
                         return;
@@ -278,7 +231,6 @@ public class TransactionController extends BaseController {
                 }
             }
         }
-
         try {
             if (selectedTransactionId == 0) {
                 service.adicionarTransacao(description, value, date, type, categoriaNome, contaNome);
@@ -334,40 +286,6 @@ public class TransactionController extends BaseController {
         accountComboBox.setItems(accountsList);
     }
 
-    private void filterCategoriesByType(TipoCategoria selectedType) {
-        if (selectedType == null) {
-            categoryComboBox.setItems(categoriesList);
-            return;
-        }
-        ObservableList<Categoria> filteredList = categoriesList.stream()
-                .filter(cat -> cat.getTipo() == selectedType)
-                .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        categoryComboBox.setItems(filteredList);
-        categoryComboBox.getSelectionModel().clearSelection();
-    }
-
-    private void filterAccountsByType(TipoCategoria selectedType) {
-        if (selectedType == null) {
-            accountComboBox.setItems(accountsList);
-            return;
-        }
-
-        ObservableList<Conta> filteredList;
-        if (selectedType == TipoCategoria.DESPESA) {
-            filteredList = accountsList.stream()
-                    .filter(conta -> conta.getTipo() == TipoConta.CONTA_CORRENTE ||
-                            conta.getTipo() == TipoConta.DINHEIRO || // <-- ALTERADO AQUI
-                            conta.getTipo() == TipoConta.CARTAO_DE_CREDITO)
-                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        } else {
-            filteredList = accountsList.stream()
-                    .filter(conta -> conta.getTipo() != TipoConta.CARTAO_DE_CREDITO)
-                    .collect(Collectors.toCollection(FXCollections::observableArrayList));
-        }
-        accountComboBox.setItems(filteredList);
-        accountComboBox.getSelectionModel().clearSelection();
-    }
-
     private void loadTransactions(String searchTerm) {
         try {
             transactionsData.clear();
@@ -375,27 +293,6 @@ public class TransactionController extends BaseController {
         } catch (Exception e) {
             e.printStackTrace();
             Platform.runLater(() -> showAlert(Alert.AlertType.ERROR, "Erro ao carregar transações", e.getMessage()));
-        }
-    }
-
-    @FXML
-    private void handleGoBack(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
-            Parent root = loader.load();
-            MenuController menuController = loader.getController();
-            menuController.setPrimaryStage(primaryStage);
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-            primaryStage.setScene(scene);
-            primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
-            primaryStage.show();
-            applyFullScreen();
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-        } catch (IOException e) {
-            System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar o menu principal.");
         }
     }
 

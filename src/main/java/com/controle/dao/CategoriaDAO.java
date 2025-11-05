@@ -32,11 +32,6 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
         }
     }
 
-    @Override
-    public void save(Categoria categoria) {
-        throw new UnsupportedOperationException("Use save(Categoria, Connection)");
-    }
-
     public Categoria findById(Integer id, Connection conn) {
         String sql = "SELECT id, nome, tipo FROM categorias WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -53,11 +48,6 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
             throw new RuntimeException("Erro ao buscar categoria.", e);
         }
         return null;
-    }
-
-    @Override
-    public Categoria findById(Integer id) {
-        throw new UnsupportedOperationException("Use findById(Integer, Connection)");
     }
 
     public List<Categoria> findAll(Connection conn) {
@@ -78,11 +68,6 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
         return categorias;
     }
 
-    @Override
-    public List<Categoria> findAll() {
-        throw new UnsupportedOperationException("Use findAll(Connection)");
-    }
-
     public void update(Categoria categoria, Connection conn) {
         String sql = "UPDATE categorias SET nome = ?, tipo = ? WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -101,11 +86,6 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
         }
     }
 
-    @Override
-    public void update(Categoria categoria) {
-        throw new UnsupportedOperationException("Use update(Categoria, Connection)");
-    }
-
     public void delete(Integer id, Connection conn) {
         String sql = "DELETE FROM categorias WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -120,11 +100,6 @@ public class CategoriaDAO extends AbstractDAO<Categoria, Integer> {
             System.err.println("Erro ao excluir categoria: " + e.getMessage());
             throw new RuntimeException("Erro ao excluir categoria.", e);
         }
-    }
-
-    @Override
-    public void delete(Integer id) {
-        throw new UnsupportedOperationException("Use delete(Integer, Connection)");
     }
 
     public Categoria findByNome(String nome, Connection conn) {

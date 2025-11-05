@@ -15,6 +15,7 @@ import java.util.List;
 import java.sql.Connection;
 
 public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
+
     private final CategoriaDAO categoriaDAO;
     private final ContaDAO contaDAO;
 
@@ -55,11 +56,6 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
         }
     }
 
-    @Override
-    public void save(Transacao transacao) {
-        throw new UnsupportedOperationException("Use save(Transacao, Connection)");
-    }
-
     public Transacao findById(Integer id, Connection conn) {
         String sql = "SELECT * FROM transacoes WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -76,18 +72,12 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
         return null;
     }
 
-    @Override
-    public Transacao findById(Integer id) {
-        throw new UnsupportedOperationException("Use findById(Integer, Connection)");
-    }
-
     public List<Transacao> findAll(Connection conn) {
         List<Transacao> transacoes = new ArrayList<>();
         String sql = "SELECT * FROM transacoes ORDER BY data DESC";
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                // Passa a conexão para o helper
                 transacoes.add(mapResultSetToTransacao(rs, conn));
             }
         } catch (SQLException e) {
@@ -95,11 +85,6 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
             throw new RuntimeException("Erro ao buscar transações.", e);
         }
         return transacoes;
-    }
-
-    @Override
-    public List<Transacao> findAll() {
-        throw new UnsupportedOperationException("Use findAll(Connection)");
     }
 
     public void update(Transacao transacao, Connection conn) {
@@ -130,11 +115,6 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
         }
     }
 
-    @Override
-    public void update(Transacao transacao) {
-        throw new UnsupportedOperationException("Use update(Transacao, Connection)");
-    }
-
     public void delete(Integer id, Connection conn) {
         String sql = "DELETE FROM transacoes WHERE id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -144,11 +124,6 @@ public class TransacaoDAO extends AbstractDAO<Transacao, Integer> {
             System.err.println("Erro ao excluir transação: " + e.getMessage());
             throw new RuntimeException("Erro ao excluir transação.", e);
         }
-    }
-
-    @Override
-    public void delete(Integer id) {
-        throw new UnsupportedOperationException("Use delete(Integer, Connection)");
     }
 
     public List<Transacao> findAllByDescriptionLike(String termoBusca, Connection conn) {

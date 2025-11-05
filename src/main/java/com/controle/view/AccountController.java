@@ -5,8 +5,6 @@ import com.controle.model.TipoConta;
 import com.controle.service.GastoPessoalService;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -18,11 +16,15 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.Stage;
+
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 
 public class AccountController extends BaseController {
@@ -38,17 +40,20 @@ public class AccountController extends BaseController {
     @FXML private TableColumn<ContaWrapper, TipoConta> colType;
     @FXML private TableColumn<ContaWrapper, Double> colSaldoInicial;
     @FXML private TableColumn<ContaWrapper, Double> colSaldoAtual;
+
     @FXML private Button addAccountButton;
     @FXML private Button updateAccountButton;
     @FXML private Button deleteAccountButton;
     @FXML private Button newAccountButton;
+
     @FXML private Label accountNameErrorLabel;
     @FXML private Label accountTypeErrorLabel;
     @FXML private Label accountSaldoInicialErrorLabel;
 
     private GastoPessoalService service;
-
     private ObservableList<ContaWrapper> contasData = FXCollections.observableArrayList();
+
+    private ExecutorService executorService;
 
     public static class ContaWrapper {
         private final Conta conta;
@@ -71,6 +76,14 @@ public class AccountController extends BaseController {
 
     public AccountController() {
         this.service = new GastoPessoalService();
+
+        ThreadFactory daemonThreadFactory = (Runnable r) -> {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+            return thread;
+        };
+
+        this.executorService = Executors.newFixedThreadPool(5, daemonThreadFactory);
     }
 
     @FXML
@@ -81,7 +94,6 @@ public class AccountController extends BaseController {
         colName.setCellValueFactory(new PropertyValueFactory<>("nome"));
         colType.setCellValueFactory(new PropertyValueFactory<>("tipo"));
         colSaldoInicial.setCellValueFactory(new PropertyValueFactory<>("saldoInicial"));
-
         colSaldoAtual.setCellValueFactory(cellData -> cellData.getValue().saldoAtualProperty().asObject());
 
         formatCurrencyColumn(colSaldoInicial);
@@ -105,6 +117,35 @@ public class AccountController extends BaseController {
                 }
             }
         });
+    }
+
+    private void abrirJanelaExtrato(ContaWrapper contaWrapper) {
+        if (contaWrapper == null) {
+            return;
+        }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/ExtratoView.fxml"));
+            Parent root = loader.load();
+
+            ExtratoController extratoController = loader.getController();
+            extratoController.initData(contaWrapper.getConta(), contaWrapper.getSaldoAtual());
+
+            Stage stage = new Stage();
+            stage.setTitle("Extrato da Conta: " + contaWrapper.getNome());
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
+            stage.setScene(scene);
+
+            stage.initOwner(primaryStage);
+            stage.initModality(javafx.stage.Modality.WINDOW_MODAL);
+
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro ao Abrir Extrato", "Não foi possível carregar a tela de extrato.");
+        }
     }
 
     private void formatCurrencyColumn(TableColumn<ContaWrapper, Double> column) {
@@ -135,7 +176,6 @@ public class AccountController extends BaseController {
         clearAllErrors();
         if (wrapper != null) {
             Conta conta = wrapper.getConta();
-
             selectedAccountId = conta.getId();
             accountNameField.setText(conta.getNome());
             accountTypeComboBox.getSelectionModel().select(conta.getTipo());
@@ -168,11 +208,9 @@ public class AccountController extends BaseController {
     @FXML
     private void handleAddOrUpdateAccount(ActionEvent event) {
         clearAllErrors();
-
         String name = accountNameField.getText();
         TipoConta type = accountTypeComboBox.getSelectionModel().getSelectedItem();
         double saldoInicial = 0.0;
-
         boolean isValid = true;
         if (name == null || name.trim().isEmpty()) {
             showFieldError(accountNameField, accountNameErrorLabel, "Nome da conta é obrigatório.");
@@ -182,7 +220,6 @@ public class AccountController extends BaseController {
             showFieldError(accountTypeComboBox, accountTypeErrorLabel, "Tipo da conta é obrigatório.");
             isValid = false;
         }
-
         try {
             String saldoStr = accountSaldoInicialField.getText().replace(",", ".");
             if (saldoStr != null && !saldoStr.trim().isEmpty()) {
@@ -192,15 +229,12 @@ public class AccountController extends BaseController {
             showFieldError(accountSaldoInicialField, accountSaldoInicialErrorLabel, "Valor inválido. Use números.");
             isValid = false;
         }
-
         if (!isValid) {
             showAlert(Alert.AlertType.WARNING, "Campos Inválidos", "Por favor, corrija os campos destacados.");
             return;
         }
-
         try {
             Conta conta = new Conta(name, saldoInicial, type);
-
             if (selectedAccountId == 0) {
                 service.adicionarConta(conta);
                 showAlert(Alert.AlertType.INFORMATION, "Sucesso", "Conta '" + name + "' adicionada!");
@@ -222,12 +256,10 @@ public class AccountController extends BaseController {
             showAlert(Alert.AlertType.WARNING, "Nenhuma Seleção", "Selecione uma conta para excluir.");
             return;
         }
-
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
         confirmAlert.setTitle("Confirmar Exclusão");
         confirmAlert.setHeaderText("Excluir Conta?");
         confirmAlert.setContentText("Atenção: Todas as transações (normais e recorrentes) associadas a esta conta serão EXCLUÍDAS permanentemente. Continuar?");
-
         Optional<ButtonType> result = confirmAlert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
@@ -243,7 +275,6 @@ public class AccountController extends BaseController {
 
     private void loadAccounts(String searchTerm) {
         accountTable.setPlaceholder(new Label("Buscando contas..."));
-
         Task<List<ContaWrapper>> loadTask = new Task<>() {
             @Override
             protected List<ContaWrapper> call() throws Exception {
@@ -251,7 +282,6 @@ public class AccountController extends BaseController {
                 return contas.stream().map(ContaWrapper::new).collect(Collectors.toList());
             }
         };
-
         loadTask.setOnSucceeded(event -> {
             contasData.setAll(loadTask.getValue());
             if (contasData.isEmpty()) {
@@ -259,12 +289,10 @@ public class AccountController extends BaseController {
             }
             calculateSaldosAsync();
         });
-
         loadTask.setOnFailed(event -> {
             accountTable.setPlaceholder(new Label("Erro ao carregar contas."));
             showAlert(Alert.AlertType.ERROR, "Erro ao Carregar", "Não foi possível carregar a lista de contas.");
         });
-
         new Thread(loadTask).start();
     }
 
@@ -276,38 +304,14 @@ public class AccountController extends BaseController {
                     return service.getSaldoAtual(wrapper.getId());
                 }
             };
-
             saldoTask.setOnSucceeded(event -> {
                 wrapper.setSaldoAtual(saldoTask.getValue());
             });
-
             saldoTask.setOnFailed(event -> {
                 System.err.println("Falha ao calcular saldo para conta " + wrapper.getId());
             });
 
-            new Thread(saldoTask).start();
-        }
-    }
-
-    @FXML
-    private void handleGoBack(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
-            Parent root = loader.load();
-            MenuController menuController = loader.getController();
-            menuController.setPrimaryStage(primaryStage);
-
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-            primaryStage.setScene(scene);
-            primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
-            primaryStage.show();
-
-            applyFullScreen();
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar o menu principal.");
+            executorService.submit(saldoTask);
         }
     }
 
@@ -316,36 +320,5 @@ public class AccountController extends BaseController {
         clearFieldError(accountNameField, accountNameErrorLabel);
         clearFieldError(accountTypeComboBox, accountTypeErrorLabel);
         clearFieldError(accountSaldoInicialField, accountSaldoInicialErrorLabel);
-    }
-
-    private void abrirJanelaExtrato(ContaWrapper contaWrapper) {
-        if (contaWrapper == null) {
-            return;
-        }
-
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/ExtratoView.fxml"));
-            Parent root = loader.load();
-
-            ExtratoController extratoController = loader.getController();
-
-            extratoController.initData(contaWrapper.getConta(), contaWrapper.getSaldoAtual());
-
-            Stage stage = new Stage();
-            stage.setTitle("Extrato da Conta: " + contaWrapper.getNome());
-
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-            stage.setScene(scene);
-
-            stage.initOwner(primaryStage);
-            stage.initModality(javafx.stage.Modality.WINDOW_MODAL);
-
-            stage.showAndWait();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro ao Abrir Extrato", "Não foi possível carregar a tela de extrato.");
-        }
     }
 }

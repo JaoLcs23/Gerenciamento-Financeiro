@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javafx.scene.control.ListCell; // <-- NOVO IMPORT
+import javafx.scene.control.ListCell;
 
 public class BudgetController extends BaseController {
 
@@ -281,30 +281,6 @@ public class BudgetController extends BaseController {
                 showAlert(Alert.AlertType.ERROR, "Erro ao Excluir", "Ocorreu um erro: " + e.getMessage());
                 e.printStackTrace();
             }
-        }
-    }
-
-    @FXML
-    private void handleGoBack(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
-            Parent root = loader.load();
-
-            MenuController menuController = loader.getController();
-            menuController.setPrimaryStage(primaryStage);
-
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
-            primaryStage.setScene(scene);
-            primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
-            primaryStage.show();
-
-            applyFullScreen();
-            showFullScreenHintTemporarily("Pressione ESC para sair.", 3000);
-        } catch (IOException e) {
-            System.err.println("Erro ao carregar o menu principal: " + e.getMessage());
-            e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Erro de Navegação", "Não foi possível carregar o menu principal.");
         }
     }
 

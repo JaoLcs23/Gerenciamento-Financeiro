@@ -178,6 +178,7 @@ public class MenuController extends BaseController {
 
     @FXML
     private void handleExit(ActionEvent event) {
+        Platform.exit();
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.close();
     }
