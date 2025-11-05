@@ -1,36 +1,53 @@
 package com.controle.util;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 
 public class DatabaseConnection {
+    private static final Properties props = new Properties();
+    private static final String URL;
 
-    // Configurações para SQL Server
-    private static final String SERVER_NAME = "DESKTOP-V3M2DDJ\\SQLEXPRESS";
-    private static final int PORT = 1433;
-    private static final String DATABASE_NAME = "db_controle_financeiro";
-    private static final String USER = "joaolucas";
-    private static final String PASSWORD = "12345678";
+    static {
+        System.out.println("Carregando configurações do banco de dados...");
+        try (InputStream input = DatabaseConnection.class.getClassLoader().getResourceAsStream("config.properties")) {
 
-    // URL de conexao para SQL Server
-    private static final String URL = "jdbc:sqlserver://" + SERVER_NAME + ":" + PORT + ";" +
-            "databaseName=" + DATABASE_NAME + ";" +
-            "user=" + USER + ";" +
-            "password=" + PASSWORD + ";" +
-            "encrypt=false;" +
-            "trustServerCertificate=true;";
+            if (input == null) {
+                System.err.println("ERRO FATAL: Não foi possível encontrar o arquivo 'config.properties' no classpath.");
+                throw new RuntimeException("Arquivo 'config.properties' não encontrado.");
+            }
+
+            props.load(input);
+
+            String serverName = props.getProperty("db.server");
+            String port = props.getProperty("db.port");
+            String databaseName = props.getProperty("db.database");
+
+            URL = "jdbc:sqlserver://" + serverName + ":" + port + ";" +
+                    "databaseName=" + databaseName + ";" +
+                    "encrypt=false;" +
+                    "trustServerCertificate=true;";
+
+            System.out.println("Configurações do banco de dados carregadas com sucesso.");
+
+        } catch (IOException ex) {
+            System.err.println("ERRO FATAL: Falha ao ler o arquivo 'config.properties'.");
+            throw new RuntimeException("Falha ao ler 'config.properties'", ex);
+        }
+    }
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL);
+        return DriverManager.getConnection(URL, props.getProperty("db.user"), props.getProperty("db.password"));
     }
 
     public static void createTables() throws SQLException {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
 
-            // Tabela 'categorias'
             String createCategoriasTableSQL = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='categorias' and xtype='U') " +
                     "CREATE TABLE categorias (" +
                     "id INT PRIMARY KEY IDENTITY(1,1), " +
@@ -40,7 +57,6 @@ public class DatabaseConnection {
             stmt.execute(createCategoriasTableSQL);
             System.out.println("Tabela 'categorias' verificada/criada com sucesso.");
 
-            // Tabela 'contas'
             String createContasTableSQL = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='contas' and xtype='U') " +
                     "CREATE TABLE contas (" +
                     "id INT PRIMARY KEY IDENTITY(1,1), " +
@@ -51,7 +67,6 @@ public class DatabaseConnection {
             stmt.execute(createContasTableSQL);
             System.out.println("Tabela 'contas' verificada/criada com sucesso.");
 
-            // Tabela 'transacoes'
             String createTransacoesTableSQL = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='transacoes' and xtype='U') " +
                     "CREATE TABLE transacoes (" +
                     "id INT PRIMARY KEY IDENTITY(1,1), " +
@@ -60,14 +75,13 @@ public class DatabaseConnection {
                     "data DATE NOT NULL, " +
                     "tipo NVARCHAR(50) NOT NULL, " +
                     "categoria_id INT, " +
-                    "conta_id INT, " + // <-- CAMPO NOVO
+                    "conta_id INT, " +
                     "FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL, " +
-                    "FOREIGN KEY (conta_id) REFERENCES contas(id) ON DELETE CASCADE" + // <-- RELACIONAMENTO NOVO
+                    "FOREIGN KEY (conta_id) REFERENCES contas(id) ON DELETE CASCADE" +
                     ");";
             stmt.execute(createTransacoesTableSQL);
             System.out.println("Tabela 'transacoes' verificada/criada com sucesso.");
 
-            // Tabela 'transacoes_recorrentes'
             String createTransacoesRecorrentesSQL = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='transacoes_recorrentes' and xtype='U') " +
                     "CREATE TABLE transacoes_recorrentes (" +
                     "id INT PRIMARY KEY IDENTITY(1,1), " +
@@ -75,18 +89,17 @@ public class DatabaseConnection {
                     "valor DECIMAL(18, 2) NOT NULL, " +
                     "tipo NVARCHAR(50) NOT NULL, " +
                     "categoria_id INT NOT NULL, " +
-                    "conta_id INT NOT NULL, " + // <-- CAMPO NOVO
+                    "conta_id INT NOT NULL, " +
                     "dia_do_mes INT NOT NULL, " +
                     "data_inicio DATE NOT NULL, " +
                     "data_fim DATE NULL, " +
                     "data_ultimo_processamento DATE NULL, " +
                     "FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE CASCADE, " +
-                    "FOREIGN KEY (conta_id) REFERENCES contas(id) ON DELETE CASCADE" + // <-- RELACIONAMENTO NOVO
+                    "FOREIGN KEY (conta_id) REFERENCES contas(id) ON DELETE CASCADE" +
                     ");";
             stmt.execute(createTransacoesRecorrentesSQL);
             System.out.println("Tabela 'transacoes_recorrentes' verificada/criada com sucesso.");
 
-            // Tabela 'orcamentos'
             String createOrcamentosTableSQL = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='orcamentos' and xtype='U') " +
                     "CREATE TABLE orcamentos (" +
                     "id INT PRIMARY KEY IDENTITY(1,1), " +

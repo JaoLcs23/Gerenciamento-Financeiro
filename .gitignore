@@ -31,3 +31,6 @@ nbdist/
 
 # Arquivos do Mac OS (do seu .gitignore)
 .DS_Store
+
+# Arquivo de configuração com senhas
+/src/main/resources/config.properties
