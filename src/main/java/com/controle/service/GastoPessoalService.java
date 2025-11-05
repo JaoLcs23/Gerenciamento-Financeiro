@@ -776,4 +776,26 @@ public class GastoPessoalService {
             throw new RuntimeException("Erro de conexão ao calcular evolução do patrimônio.", e);
         }
     }
+
+    public double getTotalReceitasPorConta(int contaId) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return listarTransacoesPorConta(contaId).stream()
+                    .filter(t -> t.getTipo() == TipoCategoria.RECEITA)
+                    .mapToDouble(Transacao::getValor)
+                    .sum();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao calcular receitas da conta.", e);
+        }
+    }
+
+    public double getTotalDespesasPorConta(int contaId) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            return listarTransacoesPorConta(contaId).stream()
+                    .filter(t -> t.getTipo() == TipoCategoria.DESPESA)
+                    .mapToDouble(Transacao::getValor)
+                    .sum();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao calcular despesas da conta.", e);
+        }
+    }
 }

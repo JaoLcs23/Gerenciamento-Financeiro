@@ -96,6 +96,15 @@ public class AccountController extends BaseController {
 
         accountTable.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> showAccountDetails(newValue));
+
+        accountTable.setOnMouseClicked(event -> {
+            if (event.getClickCount() == 2) {
+                ContaWrapper selectedConta = accountTable.getSelectionModel().getSelectedItem();
+                if (selectedConta != null) {
+                    abrirJanelaExtrato(selectedConta);
+                }
+            }
+        });
     }
 
     private void formatCurrencyColumn(TableColumn<ContaWrapper, Double> column) {
@@ -273,7 +282,6 @@ public class AccountController extends BaseController {
             });
 
             saldoTask.setOnFailed(event -> {
-                // ESTA É A LINHA QUE FOI CORRIGIDA
                 System.err.println("Falha ao calcular saldo para conta " + wrapper.getId());
             });
 
@@ -308,5 +316,36 @@ public class AccountController extends BaseController {
         clearFieldError(accountNameField, accountNameErrorLabel);
         clearFieldError(accountTypeComboBox, accountTypeErrorLabel);
         clearFieldError(accountSaldoInicialField, accountSaldoInicialErrorLabel);
+    }
+
+    private void abrirJanelaExtrato(ContaWrapper contaWrapper) {
+        if (contaWrapper == null) {
+            return;
+        }
+
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/ExtratoView.fxml"));
+            Parent root = loader.load();
+
+            ExtratoController extratoController = loader.getController();
+
+            extratoController.initData(contaWrapper.getConta(), contaWrapper.getSaldoAtual());
+
+            Stage stage = new Stage();
+            stage.setTitle("Extrato da Conta: " + contaWrapper.getNome());
+
+            Scene scene = new Scene(root);
+            scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
+            stage.setScene(scene);
+
+            stage.initOwner(primaryStage);
+            stage.initModality(javafx.stage.Modality.WINDOW_MODAL);
+
+            stage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Erro ao Abrir Extrato", "Não foi possível carregar a tela de extrato.");
+        }
     }
 }

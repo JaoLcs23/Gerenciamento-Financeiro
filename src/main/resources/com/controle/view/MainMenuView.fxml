@@ -44,7 +44,7 @@
                 </graphic>
             </Button>
 
-            <Button onAction="#handleManageMovimentacoes" text="MOVIMENTAÇÕES" styleClass="menu-button, menu-button-blue" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <Button onAction="#handleManageMovimentacoes" text="MOVIMENTAÇÕES" styleClass="menu-button, menu-button-green" GridPane.columnIndex="1" GridPane.rowIndex="1">
                 <graphic>
                     <Region styleClass="menu-icon, icon-recycle" />
                 </graphic>
