@@ -128,6 +128,9 @@ public abstract class BaseController {
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+            if (primaryStage != null) {
+                alert.initOwner(primaryStage);
+            }
             alert.showAndWait();
         });
     }

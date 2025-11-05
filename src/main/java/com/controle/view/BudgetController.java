@@ -8,28 +8,20 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
 import javafx.application.Platform;
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import javafx.scene.control.ListCell;
 
 public class BudgetController extends BaseController {
 
     private int selectedBudgetId = 0;
 
-    @FXML private Label fullScreenHintLabel;
     @FXML private ComboBox<Categoria> categoryComboBox;
     @FXML private TextField valorLimiteField;
     @FXML private ComboBox<Integer> mesComboBox;
@@ -75,28 +67,7 @@ public class BudgetController extends BaseController {
 
         loadCategoriesForComboBox();
 
-        categoryComboBox.setCellFactory(cell -> new ListCell<Categoria>() {
-            @Override
-            protected void updateItem(Categoria item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNome());
-                }
-            }
-        });
-        categoryComboBox.setButtonCell(new ListCell<Categoria>() {
-            @Override
-            protected void updateItem(Categoria item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(item.getNome());
-                }
-            }
-        });
+        setupCategoriaComboBoxFormatter(categoryComboBox);
 
         setupTableColumns();
 

@@ -6,14 +6,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.ListCell;
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Locale;
 
 public class MovimentacaoController extends BaseController {
 

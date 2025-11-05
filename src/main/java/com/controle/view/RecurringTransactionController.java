@@ -6,26 +6,18 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.Stage;
 import javafx.application.Platform;
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import javafx.scene.control.ListCell;
 
 public class RecurringTransactionController extends BaseController {
 
     private int selectedRecurringId = 0;
 
-    @FXML private Label fullScreenHintLabel;
     @FXML private TextField descriptionField;
     @FXML private TextField valueField;
     @FXML private ComboBox<TipoCategoria> typeComboBox;
@@ -94,7 +86,6 @@ public class RecurringTransactionController extends BaseController {
     }
 
     private void setupTableColumns() {
-        // ... (código existente, sem mudanças)
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colDescription.setCellValueFactory(new PropertyValueFactory<>("descricao"));
         colValue.setCellValueFactory(new PropertyValueFactory<>("valor"));

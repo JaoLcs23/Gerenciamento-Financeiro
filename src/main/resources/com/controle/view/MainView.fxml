@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17.0.8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.controle.view.MainController" styleClass="root">
+
+    <left>
+        <VBox spacing="10" styleClass="menu-sidebar" alignment="TOP_CENTER" prefWidth="260">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <Label text="MENU" styleClass="label-section-header" alignment="CENTER"/>
+
+            <Button onAction="#handleShowDashboard" text="DASHBOARD" styleClass="menu-button-sidebar, menu-button-green" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-graph" /> </graphic>
+            </Button>
+            <Button onAction="#handleManageAccounts" text="CONTAS" styleClass="menu-button-sidebar, menu-button-green" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-coins" /> </graphic>
+            </Button>
+            <Button onAction="#handleManageCategories" text="CATEGORIAS" styleClass="menu-button-sidebar, menu-button-green" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-tag" /> </graphic>
+            </Button>
+
+            <Label text="LANÇAMENTOS" styleClass="label-section-header" alignment="CENTER" style="-fx-padding-top: 15;"/>
+
+            <Button onAction="#handleManageTransactions" text="TRANSAÇÕES" styleClass="menu-button-sidebar, menu-button-green" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-coins" /> </graphic>
+            </Button>
+            <Button onAction="#handleManageMovimentacoes" text="MOVIMENTAÇÕES" styleClass="menu-button-sidebar, menu-button-green" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-recycle" /> </graphic>
+            </Button>
+            <Button onAction="#handleManageRecurring" text="RECORRENTES" styleClass="menu-button-sidebar, menu-button-green" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-recycle" /> </graphic>
+            </Button>
+            <Button onAction="#handleManageBudgets" text="ORÇAMENTOS" styleClass="menu-button-sidebar, menu-button-green" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-piggy" /> </graphic>
+            </Button>
+
+            <Region VBox.vgrow="ALWAYS" />
+            <Button onAction="#handleExit" text="SAIR" styleClass="menu-button-sidebar, menu-button-blue" maxWidth="Infinity">
+                <graphic> <Region styleClass="menu-icon, icon-exit" /> </graphic>
+            </Button>
+        </VBox>
+    </left>
+
+    <center>
+        <BorderPane fx:id="contentPane" style="-fx-background-color: white;">
+            <padding>
+                <Insets top="100" right="40" bottom="20" left="40"/>
+            </padding>
+            <top>
+                <Label fx:id="fullScreenHintLabel" styleClass="full-screen-hint-label" text="" visible="false" alignment="CENTER_RIGHT" maxWidth="Infinity"/>
+            </top>
+        </BorderPane>
+    </center>
+
+</BorderPane>

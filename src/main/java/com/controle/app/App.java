@@ -1,6 +1,6 @@
 package com.controle.app;
 
-import com.controle.view.MenuController;
+import com.controle.view.MainController;
 import com.controle.service.GastoPessoalService;
 import com.controle.util.DatabaseConnection;
 import javafx.application.Application;
@@ -33,36 +33,24 @@ public class App extends Application {
             return;
         }
 
-        new Thread(() -> {
-            System.out.println("Iniciando processamento de transações recorrentes em background...");
-            try {
-                GastoPessoalService service = new GastoPessoalService();
-                service.processarTransacoesRecorrentes();
-                System.out.println("Processamento de transações recorrentes finalizado.");
-            } catch (Exception e) {
-                System.err.println("Erro no processamento de recorrentes: " + e.getMessage());
-                e.printStackTrace();
-            }
-        }).start();
-
         Parent root = null;
         Scene scene = null;
 
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainMenuView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/controle/view/MainView.fxml"));
             root = loader.load();
 
-            MenuController menuController = loader.getController();
-            if (menuController != null) {
-                menuController.setPrimaryStage(primaryStage);
+            MainController mainController = loader.getController();
+            if (mainController != null) {
+                mainController.setPrimaryStage(primaryStage);
             } else {
-                System.err.println("ERRO: MenuController não foi obtido do FXMLLoader!");
+                System.err.println("ERRO: MainController não foi obtido do FXMLLoader!");
             }
 
-            scene = new Scene(root, 700, 750);
+            scene = new Scene(root, 1280, 800);
             scene.getStylesheets().add(getClass().getResource("/com/controle/view/style.css").toExternalForm());
 
-            primaryStage.setTitle("Controle de Gastos Pessoais - Menu Principal");
+            primaryStage.setTitle("Controle de Gastos Pessoais"); // Título simplificado
             primaryStage.setScene(scene);
 
             primaryStage.show();

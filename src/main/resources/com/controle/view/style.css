@@ -1,5 +1,5 @@
 .root {
-    -fx-background-color: linear-gradient(to bottom, #f0f2f5, #ffffff);
+    -fx-background-color: #ffffff;
     -fx-font-family: "Segoe UI", "Roboto", sans-serif;
     -fx-font-size: 14px;
 }
@@ -212,7 +212,51 @@
     -fx-font-weight: bold;
     -fx-text-fill: #555;
 }
+
 .table-row-cell .balance-label-negative {
     -fx-text-fill: #dc3545;
     -fx-font-weight: bold;
+}
+
+.menu-sidebar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e0e0e0;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.menu-button-sidebar {
+    -fx-pref-height: 45px;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 15px;
+    -fx-graphic-text-gap: 15px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 1);
+}
+.menu-button-sidebar:hover {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);
+}
+.menu-button-sidebar:focused {
+    -fx-border-color: #4a9c8c;
+    -fx-border-width: 2px;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: transparent;
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: #f0f0f0;
+    -fx-stroke-dash-array: 2 4;
+}
+
+.chart-series-line {
+    -fx-stroke-width: 2.5px;
 }
